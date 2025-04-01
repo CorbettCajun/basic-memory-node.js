@@ -46,3 +46,11 @@ coverage/
 *.swp
 *.swo
 .DS_Store
+
+# Private documentation and internal development files
+docs/internal/
+docs/ESSENTIAL_COMPATIBILITY_PLAN.md
+docs/ROADMAP_TEMPLATE.md
+benchmarks/results/
+performance_reports/
+docs/development/

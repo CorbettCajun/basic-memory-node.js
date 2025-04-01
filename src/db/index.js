@@ -1,14 +1,15 @@
 /**
- * Database configuration and models for Basic Memory
+ * Database configuration for Basic Memory
  * 
- * Sets up Sequelize ORM and defines database models
+ * Sets up Sequelize ORM and initializes database models
  */
 
-import { Sequelize, DataTypes, Model } from 'sequelize';
+import { Sequelize } from 'sequelize';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
 import { mkdirSync, existsSync } from 'fs';
 import pino from 'pino';
+import { initModels, validateModelCompatibility } from './models.js';
 
 // Configure logger
 const logger = pino({
@@ -63,241 +64,43 @@ const sequelize = new Sequelize({
   storage: dbPath,
   logging: process.env.SQL_LOGGING ? msg => logger.debug(msg) : false,
   define: {
-    timestamps: true
+    timestamps: true,
+    underscored: true // Use snake_case for automatically created fields
   }
 });
 
-// Define Entity model
-class Entity extends Model {}
-Entity.init({
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  permalink: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
-  },
-  content: {
-    type: DataTypes.TEXT,
-    allowNull: false
-  },
-  raw_content: {
-    type: DataTypes.TEXT,
-    allowNull: false
-  },
-  type: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: 'note'
-  },
-  entity_type: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  entity_metadata: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-    get() {
-      const value = this.getDataValue('entity_metadata');
-      return value ? JSON.parse(value) : null;
-    },
-    set(value) {
-      this.setDataValue('entity_metadata', value ? JSON.stringify(value) : null);
-    }
-  },
-  content_type: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    defaultValue: 'text/markdown'
-  },
-  checksum: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  attributes: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-    get() {
-      const value = this.getDataValue('attributes');
-      return value ? JSON.parse(value) : {};
-    },
-    set(value) {
-      this.setDataValue('attributes', JSON.stringify(value || {}));
-    }
-  },
-  file_path: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  last_modified: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: DataTypes.NOW
-  }
-}, {
-  sequelize,
-  modelName: 'Entity',
-  tableName: 'entities',
-  indexes: [
-    { unique: true, fields: ['permalink'] },
-    { fields: ['type'] },
-    { fields: ['title'] },
-    { fields: ['entity_type'] },
-    { fields: ['content_type'] },
-    { fields: ['file_path'] },
-    { fields: ['checksum'] }
-  ]
-});
-
-// Define Observation model
-class Observation extends Model {}
-Observation.init({
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  entity_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: Entity,
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
-  },
-  content: {
-    type: DataTypes.TEXT,
-    allowNull: false
-  },
-  category: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: 'note'
-  },
-  context: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  tags: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-    defaultValue: '[]',
-    get() {
-      const value = this.getDataValue('tags');
-      return value ? JSON.parse(value) : [];
-    },
-    set(value) {
-      this.setDataValue('tags', JSON.stringify(value || []));
-    }
-  }
-}, {
-  sequelize,
-  modelName: 'Observation',
-  tableName: 'observations',
-  timestamps: false,
-  indexes: [
-    { fields: ['entity_id'] },
-    { fields: ['category'] }
-  ]
-});
-
-// Define Link model
-class Link extends Model {}
-Link.init({
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  source_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: Entity,
-      key: 'id'
-    }
-  },
-  target_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: Entity,
-      key: 'id'
-    }
-  },
-  to_name: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  type: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: 'reference'
-  },
-  context: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  attributes: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-    get() {
-      const value = this.getDataValue('attributes');
-      return value ? JSON.parse(value) : {};
-    },
-    set(value) {
-      this.setDataValue('attributes', JSON.stringify(value || {}));
-    }
-  }
-}, {
-  sequelize,
-  modelName: 'Link',
-  tableName: 'links',
-  indexes: [
-    { fields: ['source_id'] },
-    { fields: ['target_id'] },
-    { fields: ['type'] },
-    { fields: ['to_name'] },
-    { unique: true, fields: ['source_id', 'target_id', 'type'], name: 'uix_link_source_target_type' },
-    { unique: true, fields: ['source_id', 'to_name', 'type'], name: 'uix_link_source_name_type' }
-  ]
-});
-
-// Define relationships
-Entity.hasMany(Link, { foreignKey: 'source_id', as: 'outgoing_links' });
-Entity.hasMany(Link, { foreignKey: 'target_id', as: 'incoming_links' });
-Link.belongsTo(Entity, { foreignKey: 'source_id', as: 'source' });
-Link.belongsTo(Entity, { foreignKey: 'target_id', as: 'target' });
-
-// Add Observation relationship
-Entity.hasMany(Observation, { foreignKey: 'entity_id', as: 'observations' });
-Observation.belongsTo(Entity, { foreignKey: 'entity_id', as: 'entity' });
+// Initialize models
+const models = initModels(sequelize);
+const { Entity, Observation, Relation, SearchIndex } = models;
 
 // Initialize database
-export const initializeDatabase = async () => {
+const initializeDatabase = async () => {
   try {
+    // Sync models with database schema
     logger.info('Initializing database...');
-    await sequelize.authenticate();
-    logger.info('Database connection established successfully');
-    
-    // Sync models with database
     await sequelize.sync();
-    logger.info('Database models synchronized');
     
-    return { sequelize, Entity, Link, Observation };
+    // Validate compatibility with Python implementation
+    logger.info('Validating model compatibility...');
+    const validation = await validateModelCompatibility(models, sequelize);
+    
+    if (!validation.isCompatible) {
+      logger.warn('Schema compatibility issues detected:');
+      validation.issues.forEach(issue => logger.warn(`- ${issue}`));
+    } else {
+      logger.info('Model validation successful - compatible with Python implementation');
+    }
+    
+    logger.info('Database initialization complete');
+    return true;
   } catch (error) {
-    logger.error(`Database initialization failed: ${error.message}`);
-    throw error;
+    logger.error('Database initialization failed:', error);
+    return false;
   }
 };
 
+// Attempt to initialize the database
+initializeDatabase();
+
 // Export models and Sequelize instance
-export { sequelize, Entity, Link, Observation };
+export { sequelize, Entity, Observation, Relation, SearchIndex };
