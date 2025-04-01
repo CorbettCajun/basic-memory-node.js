@@ -1,0 +1,6 @@
+{
+  "watch": ["src", "bin"],
+  "ext": "js,json",
+  "ignore": ["node_modules/*", ".git/*"],
+  "exec": "node bin/basic-memory.js mcp"
+}

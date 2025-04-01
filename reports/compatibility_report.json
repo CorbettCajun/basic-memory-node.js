@@ -1,0 +1,177 @@
+{
+  "timestamp": "2025-04-01T14:10:44.112Z",
+  "compatible": false,
+  "tableComparisons": {
+    "entity": {
+      "compatible": false,
+      "pythonName": "entity",
+      "nodejsName": "entities",
+      "missingColumns": {
+        "python": [
+          {
+            "column": "content",
+            "nodejsName": "content",
+            "mappedPythonName": "content",
+            "recommendation": "Column 'content' exists in Node.js table but not in Python (mapped name would be 'content')"
+          },
+          {
+            "column": "raw_content",
+            "nodejsName": "raw_content",
+            "mappedPythonName": "raw_content",
+            "recommendation": "Column 'raw_content' exists in Node.js table but not in Python (mapped name would be 'raw_content')"
+          },
+          {
+            "column": "type",
+            "nodejsName": "type",
+            "mappedPythonName": "relation_type",
+            "recommendation": "Column 'type' exists in Node.js table but not in Python (mapped name would be 'relation_type')"
+          },
+          {
+            "column": "attributes",
+            "nodejsName": "attributes",
+            "mappedPythonName": "attributes",
+            "recommendation": "Column 'attributes' exists in Node.js table but not in Python (mapped name would be 'attributes')"
+          },
+          {
+            "column": "last_modified",
+            "nodejsName": "last_modified",
+            "mappedPythonName": "last_modified",
+            "recommendation": "Column 'last_modified' exists in Node.js table but not in Python (mapped name would be 'last_modified')"
+          }
+        ],
+        "nodejs": [
+          {
+            "column": "entity_metadata",
+            "pythonName": "entity_metadata",
+            "mappedNodejsName": "entity_metadata",
+            "recommendation": "Column 'entity_metadata' exists in Python table but not in Node.js (mapped name would be 'entity_metadata')"
+          },
+          {
+            "column": "content_type",
+            "pythonName": "content_type",
+            "mappedNodejsName": "content_type",
+            "recommendation": "Column 'content_type' exists in Python table but not in Node.js (mapped name would be 'content_type')"
+          },
+          {
+            "column": "checksum",
+            "pythonName": "checksum",
+            "mappedNodejsName": "checksum",
+            "recommendation": "Column 'checksum' exists in Python table but not in Node.js (mapped name would be 'checksum')"
+          }
+        ]
+      },
+      "typeDiscrepancies": [
+        {
+          "pythonColumn": "created_at",
+          "nodejsColumn": "createdAt",
+          "pythonType": "TIMESTAMP",
+          "nodejsType": "DATETIME",
+          "recommendation": "Column types are incompatible: Python 'created_at' (TIMESTAMP) vs Node.js 'createdAt' (DATETIME)"
+        },
+        {
+          "pythonColumn": "updated_at",
+          "nodejsColumn": "updatedAt",
+          "pythonType": "TIMESTAMP",
+          "nodejsType": "DATETIME",
+          "recommendation": "Column types are incompatible: Python 'updated_at' (TIMESTAMP) vs Node.js 'updatedAt' (DATETIME)"
+        }
+      ],
+      "nullabilityIssues": [],
+      "recommendations": []
+    },
+    "relation": {
+      "compatible": false,
+      "pythonName": "relation",
+      "nodejsName": "links",
+      "missingColumns": {
+        "python": [
+          {
+            "column": "attributes",
+            "nodejsName": "attributes",
+            "mappedPythonName": "attributes",
+            "recommendation": "Column 'attributes' exists in Node.js table but not in Python (mapped name would be 'attributes')"
+          },
+          {
+            "column": "createdAt",
+            "nodejsName": "createdAt",
+            "mappedPythonName": "created_at",
+            "recommendation": "Column 'createdAt' exists in Node.js table but not in Python (mapped name would be 'created_at')"
+          },
+          {
+            "column": "updatedAt",
+            "nodejsName": "updatedAt",
+            "mappedPythonName": "updated_at",
+            "recommendation": "Column 'updatedAt' exists in Node.js table but not in Python (mapped name would be 'updated_at')"
+          }
+        ],
+        "nodejs": [
+          {
+            "column": "to_name",
+            "pythonName": "to_name",
+            "mappedNodejsName": "target_name",
+            "recommendation": "Column 'to_name' exists in Python table but not in Node.js (mapped name would be 'target_name')"
+          },
+          {
+            "column": "context",
+            "pythonName": "context",
+            "mappedNodejsName": "context",
+            "recommendation": "Column 'context' exists in Python table but not in Node.js (mapped name would be 'context')"
+          }
+        ]
+      },
+      "typeDiscrepancies": [],
+      "nullabilityIssues": [],
+      "recommendations": []
+    }
+  },
+  "missingTables": {
+    "python": [],
+    "nodejs": [
+      {
+        "table": "observation",
+        "pythonName": "observation",
+        "mappedNodejsName": "observations",
+        "recommendation": "Table 'observation' exists in Python but not in Node.js (mapped name would be 'observations')"
+      },
+      {
+        "table": "search_index",
+        "pythonName": "search_index",
+        "mappedNodejsName": "search_index",
+        "recommendation": "Table 'search_index' exists in Python but not in Node.js (mapped name would be 'search_index')"
+      },
+      {
+        "table": "search_index_data",
+        "pythonName": "search_index_data",
+        "mappedNodejsName": "search_index_data",
+        "recommendation": "Table 'search_index_data' exists in Python but not in Node.js (mapped name would be 'search_index_data')"
+      },
+      {
+        "table": "search_index_idx",
+        "pythonName": "search_index_idx",
+        "mappedNodejsName": "search_index_idx",
+        "recommendation": "Table 'search_index_idx' exists in Python but not in Node.js (mapped name would be 'search_index_idx')"
+      },
+      {
+        "table": "search_index_content",
+        "pythonName": "search_index_content",
+        "mappedNodejsName": "search_index_content",
+        "recommendation": "Table 'search_index_content' exists in Python but not in Node.js (mapped name would be 'search_index_content')"
+      },
+      {
+        "table": "search_index_docsize",
+        "pythonName": "search_index_docsize",
+        "mappedNodejsName": "search_index_docsize",
+        "recommendation": "Table 'search_index_docsize' exists in Python but not in Node.js (mapped name would be 'search_index_docsize')"
+      },
+      {
+        "table": "search_index_config",
+        "pythonName": "search_index_config",
+        "mappedNodejsName": "search_index_config",
+        "recommendation": "Table 'search_index_config' exists in Python but not in Node.js (mapped name would be 'search_index_config')"
+      }
+    ]
+  },
+  "recommendations": [
+    "Add Observation model to Node.js implementation to store granular entity observations"
+  ]
+}

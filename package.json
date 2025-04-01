@@ -1,0 +1,59 @@
+{
+  "name": "basic-memory-node",
+  "version": "0.10.0",
+  "description": "Local-first knowledge management system combining Zettelkasten with knowledge graphs (Node.js implementation)",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "basic-memory": "./bin/basic-memory.js"
+  },
+  "scripts": {
+    "start": "node bin/basic-memory.js",
+    "mcp": "node bin/basic-memory.js mcp",
+    "sync": "node bin/basic-memory.js sync",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "dev": "nodemon bin/basic-memory.js mcp",
+    "check-compatibility": "node scripts/direct-schema-analyzer.js",
+    "init-test-db": "node scripts/init-test-databases.js"
+  },
+  "keywords": [
+    "knowledge-management",
+    "note-taking",
+    "zettelkasten",
+    "knowledge-graph",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@fastify/cors": "^8.3.0",
+    "chalk": "^5.3.0",
+    "chokidar": "^3.5.3",
+    "commander": "^11.0.0",
+    "dotenv": "^16.3.1",
+    "fastify": "^4.21.0",
+    "front-matter": "^4.0.2",
+    "fs-extra": "^11.1.1",
+    "glob": "^10.3.3",
+    "lodash": "^4.17.21",
+    "marked": "^7.0.3",
+    "node-fetch": "^3.3.2",
+    "node-watch": "^0.7.4",
+    "pino": "^8.15.0",
+    "pino-pretty": "^10.2.0",
+    "sequelize": "^6.32.1",
+    "slugify": "^1.6.6",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.6",
+    "yaml": "^2.3.1"
+  },
+  "devDependencies": {
+    "jest": "^29.6.2",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

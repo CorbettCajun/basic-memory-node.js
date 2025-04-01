@@ -1,0 +1,236 @@
+{
+  "implementation": "Node.js",
+  "tables": {
+    "entities": {
+      "name": "entities",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKey": true
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(255)",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "permalink",
+          "type": "VARCHAR(255)",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "raw_content",
+          "type": "TEXT",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "type",
+          "type": "VARCHAR(255)",
+          "notNull": true,
+          "defaultValue": "'note'",
+          "primaryKey": false
+        },
+        {
+          "name": "attributes",
+          "type": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "file_path",
+          "type": "VARCHAR(255)",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "last_modified",
+          "type": "DATETIME",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DATETIME",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "DATETIME",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "entities_title",
+          "unique": false,
+          "columns": [
+            {
+              "name": "title",
+              "position": 0
+            }
+          ]
+        },
+        {
+          "name": "entities_type",
+          "unique": false,
+          "columns": [
+            {
+              "name": "type",
+              "position": 0
+            }
+          ]
+        },
+        {
+          "name": "entities_permalink",
+          "unique": true,
+          "columns": [
+            {
+              "name": "permalink",
+              "position": 0
+            }
+          ]
+        },
+        {
+          "name": "sqlite_autoindex_entities_1",
+          "unique": true,
+          "columns": [
+            {
+              "name": "permalink",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "foreignKeys": []
+    },
+    "links": {
+      "name": "links",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKey": true
+        },
+        {
+          "name": "source_id",
+          "type": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "target_id",
+          "type": "INTEGER",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "type",
+          "type": "VARCHAR(255)",
+          "notNull": true,
+          "defaultValue": "'reference'",
+          "primaryKey": false
+        },
+        {
+          "name": "attributes",
+          "type": "TEXT",
+          "notNull": false,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "createdAt",
+          "type": "DATETIME",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "DATETIME",
+          "notNull": true,
+          "defaultValue": null,
+          "primaryKey": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "links_type",
+          "unique": false,
+          "columns": [
+            {
+              "name": "type",
+              "position": 0
+            }
+          ]
+        },
+        {
+          "name": "links_target_id",
+          "unique": false,
+          "columns": [
+            {
+              "name": "target_id",
+              "position": 0
+            }
+          ]
+        },
+        {
+          "name": "links_source_id",
+          "unique": false,
+          "columns": [
+            {
+              "name": "source_id",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "entities",
+          "from": "target_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "NO ACTION"
+        },
+        {
+          "id": 1,
+          "seq": 0,
+          "table": "entities",
+          "from": "source_id",
+          "to": "id",
+          "onUpdate": "NO ACTION",
+          "onDelete": "NO ACTION"
+        }
+      ]
+    }
+  }
+}
