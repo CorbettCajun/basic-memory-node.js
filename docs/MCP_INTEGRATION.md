@@ -25,6 +25,7 @@ basic-memory mcp --host 0.0.0.0 --port 9000
 To connect Basic Memory to Claude Desktop:
 
 1. Start the Basic Memory MCP server:
+
    ```bash
    basic-memory mcp
    ```
@@ -44,10 +45,12 @@ Basic Memory exposes the following tools through the MCP interface:
 Retrieve a note by title or permalink.
 
 **Parameters:**
+
 - `title` (String, optional): Title of the note to retrieve
 - `permalink` (String, optional): Permalink of the note to retrieve
 
 **Returns:**
+
 - Entity object with content and metadata
 - Null if the note doesn't exist
 
@@ -56,12 +59,14 @@ Retrieve a note by title or permalink.
 Create or update a note.
 
 **Parameters:**
+
 - `title` (String): Title of the note
 - `content` (String): Content of the note
 - `type` (String, optional): Type of note (default: "note")
 - `metadata` (Object, optional): Additional metadata for the note
 
 **Returns:**
+
 - Created or updated entity object
 
 ### `delete_note`
@@ -69,10 +74,12 @@ Create or update a note.
 Delete a note by title or permalink.
 
 **Parameters:**
+
 - `title` (String, optional): Title of the note to delete
 - `permalink` (String, optional): Permalink of the note to delete
 
 **Returns:**
+
 - Boolean indicating success or failure
 
 ### `search`
@@ -80,11 +87,13 @@ Delete a note by title or permalink.
 Search for notes in the knowledge base.
 
 **Parameters:**
+
 - `query` (String): Search query text
 - `type` (String, optional): Filter by note type
 - `limit` (Number, optional): Maximum number of results to return
 
 **Returns:**
+
 - Array of matching entity objects
 
 ### `recent_activity`
@@ -92,9 +101,11 @@ Search for notes in the knowledge base.
 Get recently modified notes.
 
 **Parameters:**
+
 - `limit` (Number, optional): Maximum number of notes to return (default: 10)
 
 **Returns:**
+
 - Array of recently modified entity objects
 
 ### `canvas`
@@ -102,10 +113,12 @@ Get recently modified notes.
 Generate graph visualization data for the knowledge base.
 
 **Parameters:**
+
 - `central_entity` (String, optional): Central entity ID to focus the graph on
 - `depth` (Number, optional): Depth of relationships to include (default: 2)
 
 **Returns:**
+
 - Object containing nodes and edges for visualization
 
 ### `build_context`
@@ -113,10 +126,12 @@ Generate graph visualization data for the knowledge base.
 Create context for AI assistants based on a query.
 
 **Parameters:**
+
 - `query` (String): Query to build context for
 - `limit` (Number, optional): Maximum number of entities to include (default: 5)
 
 **Returns:**
+
 - String containing formatted context from relevant entities
 
 ### `project_info`
@@ -124,9 +139,11 @@ Create context for AI assistants based on a query.
 Get information about the current or specified project.
 
 **Parameters:**
+
 - `project_name` (String, optional): Name of the project to get info for
 
 **Returns:**
+
 - Object containing project information
 
 ### `read_content`
@@ -134,9 +151,11 @@ Get information about the current or specified project.
 Read file content from the knowledge base directory.
 
 **Parameters:**
+
 - `file_path` (String): Path to the file within the knowledge base
 
 **Returns:**
+
 - String containing the file content
 - Error object if the file doesn't exist or can't be read
 
@@ -146,7 +165,7 @@ Here are some examples of how AI assistants can interact with Basic Memory throu
 
 ### Retrieving a Note
 
-```
+```markdown
 User: What do I have in my notes about quantum computing?
 
 AI Assistant: Let me check your notes on quantum computing.
@@ -158,7 +177,7 @@ AI Assistant: I found a note titled "Quantum Computing Basics" in your knowledge
 
 ### Creating a New Note
 
-```
+```markdown
 User: Create a note about the benefits of regular exercise.
 
 AI Assistant: I'll create a note about the benefits of regular exercise.
@@ -175,7 +194,7 @@ AI Assistant: I've created a note titled "Benefits of Regular Exercise" in your 
 
 ### Building Context from the Knowledge Base
 
-```
+```markdown
 User: I'm writing a paper on climate change. What relevant information do I have in my notes?
 
 AI Assistant: Let me check your knowledge base for information related to climate change.
@@ -271,7 +290,7 @@ const tools = [
 
 After restarting the MCP server, AI assistants can use your custom tool:
 
-```
+```markdown
 User: How many notes do I have of each type?
 
 AI Assistant: Let me check the types of notes in your knowledge base.

@@ -1,126 +1,154 @@
-# Basic Memory - Node.js Implementation
+# Basic Memory MCP Server (Node.js Implementation)
 
-A local-first knowledge management system that combines the principles of Zettelkasten with knowledge graphs, implemented in Node.js.
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![MCP Protocol](https://img.shields.io/badge/MCP%20Protocol-2024--11--05-blue)](https://github.com/basicmachines-co/basic-memory)
 
 ## Overview
 
-Basic Memory is a personal knowledge management system that allows you to:
-- Store and organize notes as Markdown files
-- Create bi-directional links between notes
-- Search across your knowledge base
-- Visualize connections between ideas
-- Integrate with AI assistants through the Model Context Protocol (MCP)
-
-This Node.js implementation provides a fast, efficient, and modern codebase with full feature parity with the Python version.
+Basic Memory is a Model Context Protocol (MCP) server that provides advanced memory management, search, and context-building capabilities.
 
 ## Features
 
-- **Local-first**: Your data stays on your machine, stored as Markdown files and in a local SQLite database
-- **Markdown support**: Write notes in Markdown with front matter for metadata
-- **Wiki-style links**: Connect notes using `[[link]]` syntax
-- **File synchronization**: Automatically sync between files and database
-- **Search**: Find notes by title, content, or tags
-- **MCP integration**: Connect with Claude Desktop and other AI assistants
-- **Graph visualization**: Explore connections between your notes
+- Real-time memory synchronization
+- Comprehensive search functionality
+- Context-aware memory retrieval
+- Robust error handling
+- Extensible command system
 
-## Credits
+## Prerequisites
 
-### Original Python Implementation
+- Node.js 18.0.0 or higher
+- npm 8.0.0 or higher
 
-Basic Memory was originally created and developed by Paul Hernandez of Basic Machines ([https://github.com/basicmachines-co/basic-memory](https://github.com/basicmachines-co/basic-memory)) as a Python application. We extend our sincere gratitude to Paul for establishing the core architecture and functionality that serves as the foundation for this project.
-
-### Node.js Implementation
-
-This Node.js version was converted and enhanced by:
-- **CorbettCajun**
-- **Super Smart Innovations**
-
-The Node.js implementation maintains feature parity with the original Python version while leveraging the performance benefits and ecosystem of Node.js.
-
-## Quick Start
-
-### Installation
+## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/basic-memory-node.js.git
-# Install dependencies
+git clone https://github.com/your-org/basic-memory-node.git
+cd basic-memory-node
 npm install
 ```
 
-### Initialize a Repository
+## Configuration
+
+### Configuration Files
+
+Basic Memory supports multiple configuration methods:
+
+1. **MCP Settings (`mcp_settings.json`)**
+
+   Located at: `~/.config/basic-memory/mcp_settings.json`
+
+   ```json
+   {
+     "basic-memory": {
+       "database": {
+         "type": "sqlite",
+         "path": "~/basic-memory/database.sqlite"
+       },
+       "logging": {
+         "level": "info",
+         "path": "~/basic-memory/logs"
+       }
+     }
+   }
+   ```
+
+2. **Environment Variables**
+
+   - `MCP_DATABASE_TYPE`: Database type (default: sqlite)
+   - `MCP_DATABASE_PATH`: Path to database file
+   - `MCP_LOG_LEVEL`: Logging verbosity level
+
+   Example usage:
+   ```bash
+   export MCP_DATABASE_TYPE=postgres
+   export MCP_LOG_LEVEL=debug
+   ```
+
+## Running the Server
+
+### Development Mode
 
 ```bash
-npm run init
-```
-This creates a new Basic Memory repository in `~/basic-memory` with the initial directory structure.
+# Start server with file watching
+npm run watch
 
-### Start the MCP Server
+# Start server normally
+npm start
+```
+
+### Watch Service
+
+The included watch service (`mcp-watch-service.js`) provides:
+
+- Automatic server restart on file changes
+- Logging of server events
+- Graceful shutdown
+
+### Realtime Synchronization
+
+To ensure realtime database updates:
+
+- Keep the MCP server running
+- Use the watch service for persistent operation
+- Configure your client to maintain an active connection
+
+## CLI Commands
+
+### Basic Operations
 
 ```bash
-npm run mcp
-```
-This starts the MCP server on port 8765, allowing AI assistants to interact with your knowledge base.
+# Write a note
+basic-memory tool write-note -t "Meeting Notes" -f "work" -c "Discussed project timeline"
 
-### Add Notes
+# Read a note
+basic-memory tool read-note <identifier>
 
-Create Markdown files in your repository directory (default: `~/basic-memory`). Use front matter for metadata and wiki-style links to connect notes:
-
-```markdown
----
-title: My First Note
-tags: [example, getting-started]
----
-# My First Note
-This is an example note that links to [[Another Note]].
+# Search memories
+basic-memory tool search "project management"
 ```
 
-### Sync Notes
+## Debugging
 
-```bash
-# One-time sync
-npm run sync
-# Continuous sync (watch mode)
-npm run sync -- -w
-```
-This synchronizes your Markdown files with the database.
+### Logging
 
-## Architecture
+Logs are stored in `~/basic-memory/logs/` by default.
+Adjust log levels in configuration or via environment variables.
 
-The Node.js implementation uses:
-- **Fastify**: Fast HTTP server for the MCP implementation
-- **Sequelize**: ORM for database interactions
-- **SQLite**: Local database for storing entities and relationships
-- **Commander**: Command-line interface
-- **Chokidar**: File system watcher for synchronization
+### Common Issues
 
-## Documentation
-
-For more detailed documentation:
-- [Node.js Implementation Details](NODE.md): Specific details about the Node.js implementation
-- [Changelog](CHANGELOG.md): Version history and changes
-
-## MCP Integration
-
-The Basic Memory MCP server implements the 2025 MCP standards and provides the following tools:
-- `read_note`: Retrieve a note by title or permalink
-- `write_note`: Create or update a note
-- `delete_note`: Delete a note
-- `search`: Search for notes
-- `recent_activity`: Get recently modified notes
-- `canvas`: Generate graph visualization data
-- `build_context`: Create context for AI assistants
-- `project_info`: Get information about a project
-- `read_content`: Read file content
-
-To connect Claude Desktop:
-1. Start the MCP server: `npm run mcp`
-2. In Claude Desktop, add a new MCP server with URL `http://localhost:8765`
+- **Connection Closed**:
+  - Verify protocol version
+  - Check network configuration
+  - Ensure no port conflicts
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License
+
+## Support
+
+For issues, please file a GitHub issue with:
+
+- Detailed description
+- Error logs
+- Environment details
+
+## Roadmap
+
+- [ ] Enhanced search capabilities
+- [ ] More robust error handling
+- [ ] Additional import/export formats
+
+## Acknowledgements
+
+- [Anthropic Claude](https://www.anthropic.com/)
+- [Model Context Protocol](https://github.com/basicmachines-co/basic-memory)
