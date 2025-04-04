@@ -1,0 +1,45 @@
+cff-version: 1.0.3
+title: Basic Memory - Node.js Implementation
+version: 0.10.0
+date-released: 2025-04-02
+abstract: A local-first, developer-centric knowledge management system
+type: software
+message: "If you use this project, please cite it as follows:"
+
+authors:
+  given-names: CorbettCajun
+   affiliation: Super Smart Innovations, Inc.
+   orcid: https://orcid.org/0000-0000-0000-0000
+   email: corbettcajun@supersmartinnovations.com
+   website: https://github.com/CorbettCajun
+  website: https://www.supersmartinnovations.com
+
+repository-code: https://github.com/corbettcajun/basic-memory-node
+url: https://github.com/corbettcajun/basic-memory-node 
+license: MIT
+description: Basic Memory Node is a local-first, knowledge management system and MCP Server implementation designed to help Humans and AIs manage their information in a structured and organized manner that both can access and easily understand. It is built using Markdown (.md), a lightweight markup language, and is available in Python and Node.js/TypeScript, making it accessible to a wide range of users, from developers to non-technical users, providing a robust and scalable solution for anyone looking to streamline their workflow and improve their productivity.
+references:
+  - type: software
+    authors:
+      - family-names: Hernandez
+        given-names: Paul
+        affiliation: Basic Machines
+    title: Basic Memory - Python Implementation
+    version: 0.0.1
+    url: https://github.com/basicmachines-co/basic-memory
+    notes: Original foundational implementation that inspired this Node.js port
+
+keywords:
+  - knowledge-management
+  - developer-tools
+  - local-first
+  - node.js
+  - typescript
+
+contact:
+  - email: support@supersmartinnovations.com
+  - website: https://www.supersmartinnovations.com
+
+funding-sources:
+  - name: Super Smart Innovations
+    website: https://supersmartinnovations.com

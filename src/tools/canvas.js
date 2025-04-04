@@ -4,7 +4,7 @@
  * Generates a graph structure for visualizing note connections
  */
 
-import { Entity, Link, sequelize } from '../db/index.js';
+import { Entity, Relation, sequelize } from '../db/index.js';
 import { Op } from 'sequelize';
 import pino from 'pino';
 
@@ -77,7 +77,7 @@ export async function canvasTool(params) {
       
       for (const entity of currentEntities) {
         // Get outgoing links
-        const outgoingLinks = await Link.findAll({
+        const outgoingLinks = await Relation.findAll({
           where: { source_id: entity.id },
           include: [
             { model: Entity, as: 'target' }
@@ -85,7 +85,7 @@ export async function canvasTool(params) {
         });
         
         // Get incoming links
-        const incomingLinks = await Link.findAll({
+        const incomingLinks = await Relation.findAll({
           where: { target_id: entity.id },
           include: [
             { model: Entity, as: 'source' }

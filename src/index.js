@@ -13,6 +13,9 @@ export * from './mcp.js';
 // Export synchronization functions
 export * from './sync.js';
 
+// Export optimizations
+export * from './optimizations/index.js';
+
 // Export version information
 export const version = '0.10.0';
 
@@ -30,17 +33,20 @@ export const api = {
  * @param {string} [options.home] - Home directory path
  * @param {boolean} [options.sync] - Whether to sync files with database
  * @param {boolean} [options.watch] - Whether to watch files for changes
+ * @param {boolean} [options.optimize] - Whether to apply performance optimizations
  * @returns {Promise<Object>} - Initialization result
  */
 export async function initialize(options = {}) {
   // Import needed functions
   const { initializeDatabase } = await import('./db/index.js');
   const { synchronize, watchDirectory } = await import('./sync.js');
+  const { applyAllOptimizations } = await import('./optimizations/index.js');
   
   // Process options
   const home = options.home || process.env.BASIC_MEMORY_HOME;
   const shouldSync = options.sync ?? true;
   const shouldWatch = options.watch ?? false;
+  const shouldOptimize = options.optimize ?? true;
   
   // Set environment variable for database path
   if (home) {
@@ -50,24 +56,32 @@ export async function initialize(options = {}) {
   // Initialize database
   const dbResult = await initializeDatabase();
   
-  // Sync files if requested
+  // Apply performance optimizations if requested
+  let optimizationResult = null;
+  if (shouldOptimize) {
+    console.log('Applying performance optimizations...');
+    optimizationResult = await applyAllOptimizations();
+  }
+  
+  // Perform initial file synchronization if requested
   let syncResult = null;
   if (shouldSync) {
-    syncResult = await synchronize({ directory: process.env.BASIC_MEMORY_HOME });
+    syncResult = await synchronize();
   }
   
-  // Watch files if requested
-  let watcher = null;
+  // Setup file watching if requested
+  let watchResult = null;
   if (shouldWatch) {
-    watcher = watchDirectory(process.env.BASIC_MEMORY_HOME);
+    watchResult = watchDirectory();
   }
   
-  // Return initialization result
   return {
+    success: true,
     database: dbResult,
     sync: syncResult,
-    watcher,
-    home: process.env.BASIC_MEMORY_HOME
+    watch: watchResult,
+    optimizations: optimizationResult,
+    home
   };
 }
 

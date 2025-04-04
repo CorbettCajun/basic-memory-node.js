@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-04-02T21:47:57.874Z",
+  "eventType": "HANDSHAKE_RESPONSE",
+  "message": "Received response from MCP server",
+  "details": {
+    "responseData": "HTTP/1.1 400 Bad Request\r\ndate: Wed, 02 Apr 2025 21:48:21 GMT\r\nserver: uvicorn\r\ncontent-type: text/plain; charset=utf-8\r\ncontent-length: 30\r\nconnection: close\r\n\r\nInvalid HTTP request received."
+  },
+  "connectionAttempts": 8
+}

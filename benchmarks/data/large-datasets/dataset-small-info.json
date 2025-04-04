@@ -1,0 +1,15 @@
+{
+  "size": "small",
+  "timestamp": "2025-04-01T21:36:20.244Z",
+  "counts": {
+    "entities": 1000,
+    "observations": 5000,
+    "relations": 3000
+  },
+  "configuration": {
+    "entities": 1000,
+    "observationsPerEntity": 5,
+    "relationsPerEntity": 3,
+    "contentLength": 2000
+  }
+}

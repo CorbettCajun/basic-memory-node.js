@@ -10,7 +10,7 @@ import { mkdirSync, readdirSync } from 'fs';
 import chokidar from 'chokidar';
 import frontMatter from 'front-matter';
 import slugify from 'slugify';
-import { Entity, Link, initializeDatabase } from './db/index.js';
+import { Entity, Relation, initializeDatabase } from './db/index.js';
 import pino from 'pino';
 import { glob } from 'glob';
 import { Op } from 'sequelize';
@@ -179,7 +179,7 @@ async function processFile(filePath, directory) {
         }
         
         // Create link between source and target
-        await Link.findOrCreate({
+        await Relation.findOrCreate({
           where: {
             source_id: entity.id,
             target_id: targetEntity.id,
@@ -217,7 +217,7 @@ async function handleDeletedFile(filePath) {
     logger.info(`Deleting entity for removed file: ${entity.title}`);
     
     // Delete links
-    await Link.destroy({
+    await Relation.destroy({
       where: {
         [Op.or]: [
           { source_id: entity.id },

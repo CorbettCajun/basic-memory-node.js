@@ -1,579 +1,810 @@
-# Basic Memory Node.js API Reference
+# Basic Memory API Reference
 
-This document provides detailed documentation for the Basic Memory Node.js API, matching the functionality and interface of the Python implementation.
+This document provides comprehensive documentation for the Basic Memory Node.js API.
 
-## Core API Modules
+## Table of Contents
 
-Basic Memory's API is organized into the following modules:
+- [Overview](#overview)
+- [Entity API](#entity-api)
+- [Relation API](#relation-api)
+- [Observation API](#observation-api)
+- [Search API](#search-api)
+- [Content API](#content-api)
+- [Sync API](#sync-api)
+- [MCP API](#mcp-api)
 
-- **entity**: Functions for creating, retrieving, updating, and deleting entities
-- **relation**: Functions for managing relationships between entities
-- **observation**: Functions for creating and managing observations about entities
-- **search**: Functions for searching entities and observations
-- **content**: Utilities for extracting structured information from content
+## Overview
+
+The Basic Memory API is organized into several modules, each handling a specific aspect of the knowledge management system:
+
+- **Entity API**: Manage entities (notes, documents, etc.)
+- **Relation API**: Create and manage relationships between entities
+- **Observation API**: Record observations about entities
+- **Search API**: Find entities, relations, and observations
+- **Content API**: Extract and process information from content
+- **Sync API**: Synchronize files with the database
+- **MCP API**: Integrate with Claude Desktop and other AI assistants
+
+All modules are accessible through the main entry point:
+
+```javascript
+import { entity, relation, observation, search, content, sync, mcp } from 'basic-memory';
+```
 
 ## Entity API
 
 The Entity API provides functions for managing entities in the knowledge base.
 
-### entity.createOrUpdate(entityData)
+### entity.create(data)
 
-Creates a new entity or updates an existing one.
+Creates a new entity.
 
 **Parameters:**
-- `entityData` (Object): Entity data with the following properties:
-  - `id` (String): Unique identifier for the entity
-  - `title` (String): Title of the entity
-  - `type` (String): Type of the entity
-  - `content` (String): Content of the entity
-  - `metadata` (Object, optional): Additional metadata for the entity
-  - `permalink` (String, optional): Permanent link to the entity
 
-**Returns:**
-- Promise<Object>: The created or updated entity object
+- `data`: Object with the following properties:
+  - `title`: String, the entity title
+  - `content`: String, the entity content (optional)
+  - `type`: String, the entity type (default: 'note')
+  - `metadata`: Object, additional metadata (optional)
+
+**Returns:** Promise resolving to the created entity object.
 
 **Example:**
+
 ```javascript
-import { entity } from 'basic-memory';
-
-const newEntity = {
-  id: 'unique-id-123',
-  title: 'Example Entity',
+const newEntity = await entity.create({
+  title: 'My First Note',
+  content: 'This is the content of my first note.',
   type: 'note',
-  content: 'This is an example entity.',
   metadata: {
-    tags: ['example', 'documentation'],
-    created: new Date().toISOString()
+    tags: ['example', 'getting-started'],
+    priority: 'high'
   }
-};
-
-const result = await entity.createOrUpdate(newEntity);
-console.log(`Created entity: ${result.id}`);
+});
 ```
 
-### entity.get(entityId)
+### entity.get(id)
 
 Retrieves an entity by its ID.
 
 **Parameters:**
-- `entityId` (String): ID of the entity to retrieve
 
-**Returns:**
-- Promise<Object>: The entity object if found, or null if not found
+- `id`: String, the entity ID
+
+**Returns:** Promise resolving to the entity object or null if not found.
 
 **Example:**
+
 ```javascript
-import { entity } from 'basic-memory';
-
-const entityId = 'unique-id-123';
-const result = await entity.get(entityId);
-
-if (result) {
-  console.log(`Found entity: ${result.title}`);
-} else {
-  console.log('Entity not found');
-}
+const myEntity = await entity.get('entity-123');
 ```
 
-### entity.delete(entityId)
+### entity.getByTitle(title)
 
-Deletes an entity by its ID.
+Retrieves an entity by its title.
 
 **Parameters:**
-- `entityId` (String): ID of the entity to delete
 
-**Returns:**
-- Promise<Boolean>: True if the entity was deleted, false if not found
+- `title`: String, the entity title
+
+**Returns:** Promise resolving to the entity object or null if not found.
 
 **Example:**
+
 ```javascript
-import { entity } from 'basic-memory';
-
-const entityId = 'unique-id-123';
-const result = await entity.delete(entityId);
-
-if (result) {
-  console.log('Entity deleted successfully');
-} else {
-  console.log('Entity not found or could not be deleted');
-}
+const myEntity = await entity.getByTitle('My First Note');
 ```
 
-### entity.list(filter)
+### entity.update(id, data)
 
-Lists entities matching the specified filter.
+Updates an existing entity.
 
 **Parameters:**
-- `filter` (Object, optional): Filter criteria
-  - `type` (String, optional): Filter by entity type
-  - `permalink` (String, optional): Filter by permalink
-  - `limit` (Number, optional): Maximum number of entities to return
-  - `offset` (Number, optional): Offset for pagination
 
-**Returns:**
-- Promise<Array<Object>>: Array of entity objects matching the filter
+- `id`: String, the entity ID
+- `data`: Object with the properties to update:
+  - `title`: String, the entity title (optional)
+  - `content`: String, the entity content (optional)
+  - `type`: String, the entity type (optional)
+  - `metadata`: Object, additional metadata (optional)
 
-**Example:**
-```javascript
-import { entity } from 'basic-memory';
-
-// List all entities of type 'note'
-const filter = { type: 'note' };
-const results = await entity.list(filter);
-
-console.log(`Found ${results.length} notes`);
-```
-
-### entity.getTypes()
-
-Gets a list of all entity types in the knowledge base.
-
-**Returns:**
-- Promise<Array<String>>: Array of entity type strings
+**Returns:** Promise resolving to the updated entity object.
 
 **Example:**
-```javascript
-import { entity } from 'basic-memory';
 
-const types = await entity.getTypes();
-console.log('Entity types in the knowledge base:', types);
+```javascript
+const updatedEntity = await entity.update('entity-123', {
+  content: 'Updated content for my note.',
+  metadata: {
+    tags: ['example', 'updated']
+  }
+});
 ```
 
-### entity.updateMetadata(entityId, metadata)
+### entity.delete(id)
 
-Updates the metadata for an entity.
+Deletes an entity.
 
 **Parameters:**
-- `entityId` (String): ID of the entity to update
-- `metadata` (Object): New metadata to merge with existing metadata
 
-**Returns:**
-- Promise<Object>: The updated entity object
+- `id`: String, the entity ID
+
+**Returns:** Promise resolving to a boolean indicating success.
 
 **Example:**
+
 ```javascript
-import { entity } from 'basic-memory';
+const success = await entity.delete('entity-123');
+```
 
-const entityId = 'unique-id-123';
-const metadata = {
-  tags: ['updated', 'documentation'],
-  modified: new Date().toISOString()
-};
+### entity.list(options)
 
-const result = await entity.updateMetadata(entityId, metadata);
-console.log(`Updated metadata for entity: ${result.title}`);
+Lists entities with optional filtering.
+
+**Parameters:**
+
+- `options`: Object with the following properties:
+  - `type`: String, filter by entity type (optional)
+  - `limit`: Number, maximum number of results (default: 100)
+  - `offset`: Number, pagination offset (default: 0)
+  - `sort`: String, sort field (default: 'updatedAt')
+  - `order`: String, sort order, 'asc' or 'desc' (default: 'desc')
+
+**Returns:** Promise resolving to an array of entity objects.
+
+**Example:**
+
+```javascript
+const notes = await entity.list({
+  type: 'note',
+  limit: 10,
+  sort: 'createdAt',
+  order: 'asc'
+});
+```
+
+### entity.count(options)
+
+Counts entities with optional filtering.
+
+**Parameters:**
+
+- `options`: Object with the following properties:
+  - `type`: String, filter by entity type (optional)
+
+**Returns:** Promise resolving to the count.
+
+**Example:**
+
+```javascript
+const noteCount = await entity.count({ type: 'note' });
+```
+
+### entity.getMetadata(id, key)
+
+Gets a specific metadata field for an entity.
+
+**Parameters:**
+
+- `id`: String, the entity ID
+- `key`: String, the metadata key
+
+**Returns:** Promise resolving to the metadata value or null if not found.
+
+**Example:**
+
+```javascript
+const tags = await entity.getMetadata('entity-123', 'tags');
+```
+
+### entity.setMetadata(id, key, value)
+
+Sets a specific metadata field for an entity.
+
+**Parameters:**
+
+- `id`: String, the entity ID
+- `key`: String, the metadata key
+- `value`: Any, the metadata value
+
+**Returns:** Promise resolving to the updated entity object.
+
+**Example:**
+
+```javascript
+const updatedEntity = await entity.setMetadata('entity-123', 'priority', 'high');
+```
+
+### entity.createOrUpdate(data)
+
+Creates a new entity or updates an existing one if the title matches.
+
+**Parameters:**
+
+- `data`: Object with the following properties:
+  - `title`: String, the entity title
+  - `content`: String, the entity content (optional)
+  - `type`: String, the entity type (default: 'note')
+  - `metadata`: Object, additional metadata (optional)
+
+**Returns:** Promise resolving to the created or updated entity object.
+
+**Example:**
+
+```javascript
+const entity = await entity.createOrUpdate({
+  title: 'My Note',
+  content: 'This will create a new note or update an existing one with the same title.'
+});
 ```
 
 ## Relation API
 
 The Relation API provides functions for managing relationships between entities.
 
-### relation.create(relationData)
+### relation.create(data)
 
-Creates a relationship between two entities.
+Creates a new relation between entities.
 
 **Parameters:**
-- `relationData` (Object): Relation data with the following properties:
-  - `source_id` (String): ID of the source entity
-  - `target_id` (String): ID of the target entity
-  - `type` (String): Type of relationship
-  - `metadata` (Object, optional): Additional metadata for the relationship
 
-**Returns:**
-- Promise<Object>: The created relation object
+- `data`: Object with the following properties:
+  - `sourceId`: String, the source entity ID
+  - `targetId`: String, the target entity ID
+  - `type`: String, the relation type (default: 'link')
+  - `metadata`: Object, additional metadata (optional)
+
+**Returns:** Promise resolving to the created relation object.
 
 **Example:**
-```javascript
-import { relation } from 'basic-memory';
 
-const newRelation = {
-  source_id: 'entity-1',
-  target_id: 'entity-2',
+```javascript
+const newRelation = await relation.create({
+  sourceId: 'entity-123',
+  targetId: 'entity-456',
   type: 'references',
   metadata: {
-    strength: 0.8,
-    created: new Date().toISOString()
+    strength: 'strong',
+    context: 'Chapter 3'
   }
-};
-
-const result = await relation.create(newRelation);
-console.log(`Created relation: ${result.id}`);
+});
 ```
 
-### relation.get(filter)
+### relation.get(id)
 
-Gets relations matching the specified filter.
+Retrieves a relation by its ID.
 
 **Parameters:**
-- `filter` (Object): Filter criteria
-  - `source_id` (String, optional): Filter by source entity ID
-  - `target_id` (String, optional): Filter by target entity ID
-  - `type` (String, optional): Filter by relation type
-  - `bidirectional` (Boolean, optional): If true, search in both directions
 
-**Returns:**
-- Promise<Array<Object>>: Array of relation objects matching the filter
+- `id`: String, the relation ID
+
+**Returns:** Promise resolving to the relation object or null if not found.
 
 **Example:**
+
 ```javascript
-import { relation } from 'basic-memory';
-
-// Get all relations where entity-1 is the source
-const filter = { source_id: 'entity-1' };
-const results = await relation.get(filter);
-
-console.log(`Found ${results.length} relations`);
+const myRelation = await relation.get('relation-123');
 ```
 
-### relation.delete(relationId)
+### relation.update(id, data)
 
-Deletes a relation by its ID.
+Updates an existing relation.
 
 **Parameters:**
-- `relationId` (String): ID of the relation to delete
 
-**Returns:**
-- Promise<Boolean>: True if the relation was deleted, false if not found
+- `id`: String, the relation ID
+- `data`: Object with the properties to update:
+  - `type`: String, the relation type (optional)
+  - `metadata`: Object, additional metadata (optional)
 
-**Example:**
-```javascript
-import { relation } from 'basic-memory';
-
-const relationId = 'relation-123';
-const result = await relation.delete(relationId);
-
-if (result) {
-  console.log('Relation deleted successfully');
-} else {
-  console.log('Relation not found or could not be deleted');
-}
-```
-
-### relation.getTypes()
-
-Gets a list of all relation types in the knowledge base.
-
-**Returns:**
-- Promise<Array<String>>: Array of relation type strings
+**Returns:** Promise resolving to the updated relation object.
 
 **Example:**
-```javascript
-import { relation } from 'basic-memory';
 
-const types = await relation.getTypes();
-console.log('Relation types in the knowledge base:', types);
+```javascript
+const updatedRelation = await relation.update('relation-123', {
+  type: 'cites',
+  metadata: {
+    strength: 'weak'
+  }
+});
 ```
 
-### relation.findRelated(entityId, options)
+### relation.delete(id)
 
-Finds entities related to the specified entity.
+Deletes a relation.
 
 **Parameters:**
-- `entityId` (String): ID of the entity to find relations for
-- `options` (Object, optional): Options for the query
-  - `types` (Array<String>, optional): Only include relations of these types
-  - `direction` (String, optional): 'incoming', 'outgoing', or 'both' (default)
-  - `includeEntities` (Boolean, optional): If true, include the related entities in the result
 
-**Returns:**
-- Promise<Array<Object>>: Array of relation objects, optionally with related entities
+- `id`: String, the relation ID
+
+**Returns:** Promise resolving to a boolean indicating success.
 
 **Example:**
-```javascript
-import { relation } from 'basic-memory';
 
-const entityId = 'entity-1';
-const options = {
+```javascript
+const success = await relation.delete('relation-123');
+```
+
+### relation.getByEntities(sourceId, targetId, type)
+
+Retrieves relations between two entities with optional type filtering.
+
+**Parameters:**
+
+- `sourceId`: String, the source entity ID
+- `targetId`: String, the target entity ID
+- `type`: String, the relation type (optional)
+
+**Returns:** Promise resolving to an array of relation objects.
+
+**Example:**
+
+```javascript
+const relations = await relation.getByEntities('entity-123', 'entity-456', 'references');
+```
+
+### relation.getForEntity(entityId, options)
+
+Retrieves relations for a specific entity.
+
+**Parameters:**
+
+- `entityId`: String, the entity ID
+- `options`: Object with the following properties:
+  - `direction`: String, 'outgoing', 'incoming', or 'both' (default: 'both')
+  - `type`: String, filter by relation type (optional)
+  - `limit`: Number, maximum number of results (default: 100)
+  - `offset`: Number, pagination offset (default: 0)
+
+**Returns:** Promise resolving to an array of relation objects.
+
+**Example:**
+
+```javascript
+const relations = await relation.getForEntity('entity-123', {
   direction: 'outgoing',
-  includeEntities: true
-};
+  type: 'references'
+});
+```
 
-const results = await relation.findRelated(entityId, options);
-console.log(`Found ${results.length} related entities`);
+### relation.count(options)
+
+Counts relations with optional filtering.
+
+**Parameters:**
+
+- `options`: Object with the following properties:
+  - `sourceId`: String, filter by source entity ID (optional)
+  - `targetId`: String, filter by target entity ID (optional)
+  - `type`: String, filter by relation type (optional)
+
+**Returns:** Promise resolving to the count.
+
+**Example:**
+
+```javascript
+const referenceCount = await relation.count({
+  sourceId: 'entity-123',
+  type: 'references'
+});
+```
+
+### relation.createBidirectional(data)
+
+Creates a bidirectional relation between entities (two relations, one in each direction).
+
+**Parameters:**
+
+- `data`: Object with the following properties:
+  - `entityId1`: String, the first entity ID
+  - `entityId2`: String, the second entity ID
+  - `type`: String, the relation type (default: 'link')
+  - `metadata`: Object, additional metadata (optional)
+
+**Returns:** Promise resolving to an array with both created relation objects.
+
+**Example:**
+
+```javascript
+const relations = await relation.createBidirectional({
+  entityId1: 'entity-123',
+  entityId2: 'entity-456',
+  type: 'connected-to',
+  metadata: {
+    strength: 'strong'
+  }
+});
 ```
 
 ## Observation API
 
 The Observation API provides functions for managing observations about entities.
 
-### observation.create(observationData)
+### observation.create(data)
 
 Creates a new observation for an entity.
 
 **Parameters:**
-- `observationData` (Object): Observation data with the following properties:
-  - `id` (String, optional): Unique identifier for the observation
-  - `entity_id` (String): ID of the entity this observation is about
-  - `category` (String): Category of the observation
-  - `content` (String): Content of the observation
-  - `metadata` (Object, optional): Additional metadata for the observation
 
-**Returns:**
-- Promise<Object>: The created observation object
+- `data`: Object with the following properties:
+  - `entityId`: String, the entity ID
+  - `content`: String, the observation content
+  - `type`: String, the observation type (default: 'note')
+  - `metadata`: Object, additional metadata (optional)
+
+**Returns:** Promise resolving to the created observation object.
 
 **Example:**
-```javascript
-import { observation } from 'basic-memory';
 
-const newObservation = {
-  entity_id: 'entity-123',
-  category: 'note',
-  content: 'This is an important observation about the entity.',
+```javascript
+const newObservation = await observation.create({
+  entityId: 'entity-123',
+  content: 'This entity contains important information about quantum physics.',
+  type: 'insight',
   metadata: {
-    tags: ['important', 'follow-up'],
-    created: new Date().toISOString()
+    tags: ['important', 'review'],
+    source: 'user-analysis'
   }
-};
-
-const result = await observation.create(newObservation);
-console.log(`Created observation: ${result.id}`);
+});
 ```
 
-### observation.get(filter)
+### observation.get(id)
 
-Gets observations matching the specified filter.
+Retrieves an observation by its ID.
 
 **Parameters:**
-- `filter` (Object): Filter criteria
-  - `entity_id` (String, optional): Filter by entity ID
-  - `category` (String, optional): Filter by category
-  - `limit` (Number, optional): Maximum number of observations to return
-  - `offset` (Number, optional): Offset for pagination
 
-**Returns:**
-- Promise<Array<Object>>: Array of observation objects matching the filter
+- `id`: String, the observation ID
+
+**Returns:** Promise resolving to the observation object or null if not found.
 
 **Example:**
+
 ```javascript
-import { observation } from 'basic-memory';
-
-// Get all observations for entity-123
-const filter = { entity_id: 'entity-123' };
-const results = await observation.get(filter);
-
-console.log(`Found ${results.length} observations`);
+const myObservation = await observation.get('observation-123');
 ```
 
-### observation.getById(observationId)
-
-Gets an observation by its ID.
-
-**Parameters:**
-- `observationId` (String): ID of the observation to retrieve
-
-**Returns:**
-- Promise<Object>: The observation object if found, or null if not found
-
-**Example:**
-```javascript
-import { observation } from 'basic-memory';
-
-const observationId = 'observation-123';
-const result = await observation.getById(observationId);
-
-if (result) {
-  console.log(`Found observation: ${result.category}`);
-} else {
-  console.log('Observation not found');
-}
-```
-
-### observation.update(observationId, observationData)
+### observation.update(id, data)
 
 Updates an existing observation.
 
 **Parameters:**
-- `observationId` (String): ID of the observation to update
-- `observationData` (Object): New observation data
 
-**Returns:**
-- Promise<Object>: The updated observation object
+- `id`: String, the observation ID
+- `data`: Object with the properties to update:
+  - `content`: String, the observation content (optional)
+  - `type`: String, the observation type (optional)
+  - `metadata`: Object, additional metadata (optional)
+
+**Returns:** Promise resolving to the updated observation object.
 
 **Example:**
+
 ```javascript
-import { observation } from 'basic-memory';
-
-const observationId = 'observation-123';
-const updatedData = {
-  content: 'Updated observation content',
+const updatedObservation = await observation.update('observation-123', {
+  content: 'Updated observation about this entity.',
   metadata: {
-    tags: ['updated', 'important'],
-    modified: new Date().toISOString()
+    importance: 'high'
   }
-};
-
-const result = await observation.update(observationId, updatedData);
-console.log(`Updated observation: ${result.id}`);
+});
 ```
 
-### observation.delete(observationId)
+### observation.delete(id)
 
-Deletes an observation by its ID.
+Deletes an observation.
 
 **Parameters:**
-- `observationId` (String): ID of the observation to delete
 
-**Returns:**
-- Promise<Boolean>: True if the observation was deleted, false if not found
+- `id`: String, the observation ID
+
+**Returns:** Promise resolving to a boolean indicating success.
 
 **Example:**
+
 ```javascript
-import { observation } from 'basic-memory';
-
-const observationId = 'observation-123';
-const result = await observation.delete(observationId);
-
-if (result) {
-  console.log('Observation deleted successfully');
-} else {
-  console.log('Observation not found or could not be deleted');
-}
+const success = await observation.delete('observation-123');
 ```
 
-### observation.getCategories()
+### observation.getForEntity(entityId, options)
 
-Gets a list of all observation categories in the knowledge base.
+Retrieves observations for a specific entity.
 
-**Returns:**
-- Promise<Array<String>>: Array of observation category strings
+**Parameters:**
+
+- `entityId`: String, the entity ID
+- `options`: Object with the following properties:
+  - `type`: String, filter by observation type (optional)
+  - `limit`: Number, maximum number of results (default: 100)
+  - `offset`: Number, pagination offset (default: 0)
+  - `sort`: String, sort field (default: 'createdAt')
+  - `order`: String, sort order, 'asc' or 'desc' (default: 'desc')
+
+**Returns:** Promise resolving to an array of observation objects.
 
 **Example:**
-```javascript
-import { observation } from 'basic-memory';
 
-const categories = await observation.getCategories();
-console.log('Observation categories in the knowledge base:', categories);
+```javascript
+const observations = await observation.getForEntity('entity-123', {
+  type: 'insight',
+  limit: 5,
+  sort: 'createdAt',
+  order: 'desc'
+});
+```
+
+### observation.count(options)
+
+Counts observations with optional filtering.
+
+**Parameters:**
+
+- `options`: Object with the following properties:
+  - `entityId`: String, filter by entity ID (optional)
+  - `type`: String, filter by observation type (optional)
+
+**Returns:** Promise resolving to the count.
+
+**Example:**
+
+```javascript
+const insightCount = await observation.count({
+  entityId: 'entity-123',
+  type: 'insight'
+});
 ```
 
 ## Search API
 
-The Search API provides functions for searching entities and observations in the knowledge base.
+The Search API provides functions for searching across entities, relations, and observations.
 
-### search.entities(query, filters)
+### search.entities(query, options)
 
-Searches for entities matching the query text.
-
-**Parameters:**
-- `query` (String): Search query text
-- `filters` (Object, optional): Filters to apply to the search
-  - `type` (String, optional): Filter by entity type
-  - `limit` (Number, optional): Maximum number of results to return
-  - `offset` (Number, optional): Offset for pagination
-
-**Returns:**
-- Promise<Array<Object>>: Array of matching entity objects
-
-**Example:**
-```javascript
-import { search } from 'basic-memory';
-
-const query = 'important concept';
-const filters = { type: 'note', limit: 10 };
-
-const results = await search.entities(query, filters);
-console.log(`Found ${results.length} matching entities`);
-```
-
-### search.observations(query, filters)
-
-Searches for observations matching the query text.
+Searches for entities based on a text query.
 
 **Parameters:**
-- `query` (String): Search query text
-- `filters` (Object, optional): Filters to apply to the search
-  - `entity_id` (String, optional): Filter by entity ID
-  - `category` (String, optional): Filter by category
-  - `limit` (Number, optional): Maximum number of results to return
-  - `offset` (Number, optional): Offset for pagination
 
-**Returns:**
-- Promise<Array<Object>>: Array of matching observation objects
+- `query`: String, the search query
+- `options`: Object with the following properties:
+  - `type`: String, filter by entity type (optional)
+  - `fields`: Array of strings, fields to search within (default: ['title', 'content'])
+  - `limit`: Number, maximum number of results (default: 10)
+  - `offset`: Number, pagination offset (default: 0)
+
+**Returns:** Promise resolving to an array of entity objects with match information.
 
 **Example:**
+
 ```javascript
-import { search } from 'basic-memory';
-
-const query = 'important finding';
-const filters = { category: 'note', limit: 10 };
-
-const results = await search.observations(query, filters);
-console.log(`Found ${results.length} matching observations`);
+const results = await search.entities('quantum physics', {
+  type: 'note',
+  fields: ['title', 'content', 'metadata.tags'],
+  limit: 5
+});
 ```
 
-### search.updateIndex(entityId)
+### search.relations(options)
 
-Updates the search index for a specific entity.
+Searches for relations based on various criteria.
 
 **Parameters:**
-- `entityId` (String): ID of the entity to update in the search index
 
-**Returns:**
-- Promise<Boolean>: True if the index was updated successfully
+- `options`: Object with the following properties:
+  - `sourceId`: String, filter by source entity ID (optional)
+  - `targetId`: String, filter by target entity ID (optional)
+  - `type`: String, filter by relation type (optional)
+  - `limit`: Number, maximum number of results (default: 10)
+  - `offset`: Number, pagination offset (default: 0)
+
+**Returns:** Promise resolving to an array of relation objects.
 
 **Example:**
+
 ```javascript
-import { search } from 'basic-memory';
-
-const entityId = 'entity-123';
-const result = await search.updateIndex(entityId);
-
-if (result) {
-  console.log('Search index updated successfully');
-} else {
-  console.log('Failed to update search index');
-}
+const results = await search.relations({
+  sourceId: 'entity-123',
+  type: 'references',
+  limit: 5
+});
 ```
 
-### search.rebuildIndices()
+### search.observations(query, options)
 
-Rebuilds all search indices for the knowledge base.
+Searches for observations based on a text query.
 
-**Returns:**
-- Promise<Boolean>: True if indices were rebuilt successfully
+**Parameters:**
+
+- `query`: String, the search query
+- `options`: Object with the following properties:
+  - `entityId`: String, filter by entity ID (optional)
+  - `type`: String, filter by observation type (optional)
+  - `fields`: Array of strings, fields to search within (default: ['content'])
+  - `limit`: Number, maximum number of results (default: 10)
+  - `offset`: Number, pagination offset (default: 0)
+
+**Returns:** Promise resolving to an array of observation objects with match information.
 
 **Example:**
+
 ```javascript
-import { search } from 'basic-memory';
+const results = await search.observations('important concept', {
+  entityId: 'entity-123',
+  type: 'insight',
+  limit: 5
+});
+```
 
-const result = await search.rebuildIndices();
+### search.all(query, options)
 
-if (result) {
-  console.log('Search indices rebuilt successfully');
-} else {
-  console.log('Failed to rebuild search indices');
-}
+Searches across entities, relations, and observations based on a text query.
+
+**Parameters:**
+
+- `query`: String, the search query
+- `options`: Object with the following properties:
+  - `types`: Array of strings, types of objects to search (default: ['entity', 'observation'])
+  - `limit`: Number, maximum number of results per type (default: 5)
+  - `offset`: Number, pagination offset (default: 0)
+
+**Returns:** Promise resolving to an object with results grouped by type.
+
+**Example:**
+
+```javascript
+const results = await search.all('quantum', {
+  types: ['entity', 'observation'],
+  limit: 3
+});
+```
+
+### search.byTag(tag, options)
+
+Searches for entities with a specific tag.
+
+**Parameters:**
+
+- `tag`: String, the tag to search for
+- `options`: Object with the following properties:
+  - `type`: String, filter by entity type (optional)
+  - `limit`: Number, maximum number of results (default: 10)
+  - `offset`: Number, pagination offset (default: 0)
+
+**Returns:** Promise resolving to an array of entity objects.
+
+**Example:**
+
+```javascript
+const results = await search.byTag('physics', {
+  type: 'note',
+  limit: 5
+});
+```
+
+### search.buildIndex()
+
+Rebuilds the search index for all entities and observations.
+
+**Returns:** Promise resolving when the index has been built.
+
+**Example:**
+
+```javascript
+await search.buildIndex();
 ```
 
 ## Content API
 
-The Content API provides utilities for extracting structured information from various types of content.
+The Content API provides utilities for extracting structured information from content, particularly Markdown files.
+
+### Content Extraction Overview
+
+The content extraction module provides tools for:
+
+- Extracting YAML front matter from Markdown
+- Finding and processing wiki-style and standard Markdown links
+- Analyzing document structure through headings
+- Extracting tags, code blocks, and other elements
+- Converting Markdown to HTML or plain text
+- Splitting content into logical sections
+- Processing embedded data formats
+
+All content extraction functions are available through the `content` API module:
+
+```javascript
+import { content } from 'basic-memory';
+
+// Now you can use content.extractFrontMatter, content.extractLinks, etc.
+```
+
+#### Common Usage Patterns
+
+Here are some common usage patterns for the content extraction utilities:
+
+1. **Extracting document metadata**:
+
+```javascript
+function extractDocumentMetadata(filePath) {
+  const markdownContent = fs.readFileSync(filePath, 'utf-8');
+  
+  // Extract front matter (title, tags, etc.)
+  const { frontMatter, content: contentWithoutFrontMatter } = content.extractFrontMatter(markdownContent);
+  
+  // Extract headings to understand document structure
+  const headings = content.extractHeadings(contentWithoutFrontMatter);
+  
+  // Extract links to find connections
+  const links = content.extractLinks(contentWithoutFrontMatter);
+  
+  return {
+    metadata: frontMatter,
+    structure: headings,
+    connections: links
+  };
+}
+```
+
+1. **Generating a table of contents**:
+
+```javascript
+function generateTableOfContents(markdownContent) {
+  const headings = content.extractHeadings(markdownContent);
+  
+  let toc = '## Table of Contents\n\n';
+  
+  headings.forEach(heading => {
+    // Create indentation based on heading level
+    const indent = '  '.repeat(heading.level - 1);
+    
+    // Create a link-friendly ID from the heading text
+    const id = heading.text.toLowerCase().replace(/\s+/g, '-');
+    
+    toc += `${indent}- [${heading.text}](#${id})\n`;
+  });
+  
+  return toc;
+}
+```
+
+1. **Processing sections individually**:
+
+```javascript
+function processSections(markdownContent) {
+  const sections = content.splitSections(markdownContent);
+  
+  return sections.map(section => {
+    // Process each section individually
+    return {
+      title: section.title,
+      level: section.level,
+      summary: content.markdownToPlainText(section.content).substring(0, 150) + '...',
+      wordCount: section.content.split(/\s+/).length
+    };
+  });
+}
+```
 
 ### content.extractFrontMatter(markdownContent)
 
 Extracts YAML front matter from Markdown content.
 
 **Parameters:**
-- `markdownContent` (String): Markdown content with front matter
 
-**Returns:**
-- Object: Object containing parsed front matter and content without front matter
-  - `frontMatter` (Object): Parsed front matter data
-  - `content` (String): Markdown content with front matter removed
+- `markdownContent`: String, the Markdown content with front matter
+
+**Returns:** Object with the following properties:
+
+- `frontMatter`: Object containing the parsed front matter
+- `content`: String, the content without front matter
 
 **Example:**
-```javascript
-import { content } from 'basic-memory';
 
-const markdown = `---
-title: Example Note
+```javascript
+const { frontMatter, content } = content.extractFrontMatter(`---
+title: My Note
 tags: [example, documentation]
 ---
-# Example Note
-This is an example note with front matter.`;
-
-const result = content.extractFrontMatter(markdown);
-console.log('Front matter:', result.frontMatter);
-console.log('Content:', result.content);
+# My Note
+This is my note content.`);
 ```
 
 ### content.extractLinks(markdownContent)
@@ -581,117 +812,68 @@ console.log('Content:', result.content);
 Extracts links from Markdown content.
 
 **Parameters:**
-- `markdownContent` (String): Markdown content
 
-**Returns:**
-- Array<Object>: Array of extracted link objects
-  - `text` (String): Link text
-  - `url` (String): Link URL
-  - `type` (String): 'wiki' for wiki-style links, 'markdown' for standard Markdown links
-  - `position` (Object): Position in the original text
+- `markdownContent`: String, the Markdown content
 
-**Example:**
-```javascript
-import { content } from 'basic-memory';
+**Returns:** Array of link objects with the following properties:
 
-const markdown = `# Example Note
-This is an example with a [standard link](https://example.com) and a [[wiki link]].`;
-
-const links = content.extractLinks(markdown);
-console.log(`Found ${links.length} links:`, links);
-```
-
-### content.extractHeadings(markdownContent)
-
-Extracts headings from Markdown content with their hierarchy.
-
-**Parameters:**
-- `markdownContent` (String): Markdown content
-
-**Returns:**
-- Array<Object>: Array of extracted heading objects
-  - `text` (String): Heading text
-  - `level` (Number): Heading level (1-6)
-  - `position` (Object): Position in the original text
+- `text`: String, the link text
+- `url`: String, the link URL
+- `type`: String, 'wiki' for wiki-style links ([[link]]) or 'markdown' for standard Markdown links
+- `position`: Object with start and end positions
 
 **Example:**
+
 ```javascript
-import { content } from 'basic-memory';
-
-const markdown = `# Main Heading
-Some content
-## Sub Heading
-More content
-### Sub-sub Heading
-Even more content`;
-
-const headings = content.extractHeadings(markdown);
-console.log('Headings:', headings);
+const links = content.extractLinks(`# My Note
+This is a [standard link](https://example.com) and a [[wiki link]].`);
 ```
 
 ### content.extractTags(markdownContent, options)
 
-Extracts tags from Markdown content.
+Extracts tags from front matter and content.
 
 **Parameters:**
-- `markdownContent` (String): Markdown content
-- `options` (Object, optional): Extraction options
-  - `includeFrontMatter` (Boolean, optional): Whether to include tags from front matter (default: true)
-  - `includeHashtags` (Boolean, optional): Whether to include hashtags from content (default: true)
 
-**Returns:**
-- Array<String>: Array of extracted tag strings
+- `markdownContent`: String, the Markdown content
+- `options`: Object (optional) with properties:
+  - `includeFrontMatter`: Boolean, whether to include tags from front matter (default: true)
+  - `includeHashtags`: Boolean, whether to include #hashtags from content (default: true)
+
+**Returns:** Array of unique tag strings.
 
 **Example:**
+
 ```javascript
-import { content } from 'basic-memory';
-
-const markdown = `---
-title: Example Note
-tags: [documentation, example]
+const tags = content.extractTags(`---
+title: My Note
+tags: [example, documentation]
 ---
-# Example Note
-This is an example note with #hashtags in the content.`;
-
-const tags = content.extractTags(markdown);
-console.log('Tags:', tags); // ['documentation', 'example', 'hashtags']
+# My Note
+This is tagged with #important and #todo.`);
 ```
 
-### content.extractCodeBlocks(markdownContent)
+### content.extractHeadings(markdownContent)
 
-Extracts code blocks from Markdown content.
+Extracts headings from Markdown content.
 
 **Parameters:**
-- `markdownContent` (String): Markdown content
 
-**Returns:**
-- Array<Object>: Array of extracted code block objects
-  - `language` (String): Programming language of the code block
-  - `code` (String): Code content
-  - `position` (Object): Position in the original text
+- `markdownContent`: String, the Markdown content
+
+**Returns:** Array of heading objects with the following properties:
+
+- `text`: String, the heading text
+- `level`: Number, the heading level (1-6)
+- `position`: Object with start and end positions
 
 **Example:**
+
 ```javascript
-import { content } from 'basic-memory';
-
-const markdown = `# Example Code
-Here is some JavaScript code:
-
-\`\`\`javascript
-function hello() {
-  console.log('Hello, world!');
-}
-\`\`\`
-
-And some Python:
-
-\`\`\`python
-def hello():
-    print('Hello, world!')
-\`\`\``;
-
-const codeBlocks = content.extractCodeBlocks(markdown);
-console.log(`Found ${codeBlocks.length} code blocks:`, codeBlocks);
+const headings = content.extractHeadings(`# Main Heading
+Content
+## Sub Heading
+More content`);
 ```
 
 ### content.markdownToHtml(markdownContent)
@@ -699,20 +881,15 @@ console.log(`Found ${codeBlocks.length} code blocks:`, codeBlocks);
 Converts Markdown content to HTML.
 
 **Parameters:**
-- `markdownContent` (String): Markdown content
 
-**Returns:**
-- String: HTML content
+- `markdownContent`: String, the Markdown content
+
+**Returns:** String containing the HTML content.
 
 **Example:**
+
 ```javascript
-import { content } from 'basic-memory';
-
-const markdown = `# Example Heading
-This is **bold** and *italic* text.`;
-
-const html = content.markdownToHtml(markdown);
-console.log('HTML:', html);
+const html = content.markdownToHtml('# Heading\nThis is **bold** text.');
 ```
 
 ### content.markdownToPlainText(markdownContent)
@@ -720,20 +897,15 @@ console.log('HTML:', html);
 Converts Markdown content to plain text.
 
 **Parameters:**
-- `markdownContent` (String): Markdown content
 
-**Returns:**
-- String: Plain text content
+- `markdownContent`: String, the Markdown content
+
+**Returns:** String containing the plain text content.
 
 **Example:**
+
 ```javascript
-import { content } from 'basic-memory';
-
-const markdown = `# Example Heading
-This is **bold** and *italic* text.`;
-
-const plainText = content.markdownToPlainText(markdown);
-console.log('Plain text:', plainText);
+const plainText = content.markdownToPlainText('# Heading\nThis is **bold** text.');
 ```
 
 ### content.splitSections(markdownContent)
@@ -741,25 +913,222 @@ console.log('Plain text:', plainText);
 Splits Markdown content into sections based on headings.
 
 **Parameters:**
-- `markdownContent` (String): Markdown content
 
-**Returns:**
-- Array<Object>: Array of section objects
-  - `title` (String): Section title (heading text)
-  - `level` (Number): Heading level (1-6)
-  - `content` (String): Section content
+- `markdownContent`: String, the Markdown content
+
+**Returns:** Array of section objects with the following properties:
+
+- `title`: String, the section heading
+- `level`: Number, the heading level (1-6)
+- `content`: String, the section content
 
 **Example:**
+
 ```javascript
-import { content } from 'basic-memory';
-
-const markdown = `# Main Heading
-Introduction text.
+const sections = content.splitSections(`# Main Heading
+Intro text
 ## First Section
-Section content.
+Section content
 ## Second Section
-More section content.`;
+More content`);
+```
 
-const sections = content.splitSections(markdown);
-console.log(`Found ${sections.length} sections:`, sections);
+## Sync API
+
+The Sync API provides functions for synchronizing files with the database.
+
+### sync.run(options)
+
+Synchronizes Markdown files with the database.
+
+**Parameters:**
+
+- `options`: Object with the following properties:
+  - `directory`: String, the directory to sync (default: '~/basic-memory')
+  - `watch`: Boolean, whether to watch for file changes (default: false)
+  - `verbose`: Boolean, whether to output verbose logs (default: false)
+
+**Returns:** Promise resolving when sync is complete or when watch mode is started.
+
+**Example:**
+
+```javascript
+// One-time sync
+await sync.run({ directory: '/path/to/notes' });
+
+// Watch mode
+const stopWatching = await sync.run({
+  directory: '/path/to/notes',
+  watch: true,
+  verbose: true
+});
+
+// Later, to stop watching
+stopWatching();
+```
+
+### sync.syncFile(filePath)
+
+Synchronizes a single Markdown file with the database.
+
+**Parameters:**
+
+- `filePath`: String, path to the Markdown file
+
+**Returns:** Promise resolving to the created or updated entity.
+
+**Example:**
+
+```javascript
+const entity = await sync.syncFile('/path/to/notes/my-note.md');
+```
+
+### sync.deleteFile(filePath)
+
+Removes an entity from the database when a file is deleted.
+
+**Parameters:**
+
+- `filePath`: String, path to the deleted Markdown file
+
+**Returns:** Promise resolving to a boolean indicating success.
+
+**Example:**
+
+```javascript
+const success = await sync.deleteFile('/path/to/notes/deleted-note.md');
+```
+
+## MCP API
+
+The MCP API provides functions for integrating with AI assistants through the Model Context Protocol.
+
+### MCP Integration Overview
+
+Model Context Protocol (MCP) is a standardized interface for AI models to interact with external tools and services. Basic Memory implements an MCP server that allows AI assistants like Claude Desktop to access and manipulate your knowledge base.
+
+#### What is MCP?
+
+MCP enables AI assistants to:
+
+- Read and write notes in your knowledge base
+- Search for relevant information
+- Build context based on queries
+- Manage links between notes
+- Access file content
+
+#### Connecting to Claude Desktop
+
+To connect Basic Memory to Claude Desktop:
+
+1. Start the Basic Memory MCP server:
+
+   ```bash
+   basic-memory mcp
+   ```
+
+2. In Claude Desktop:
+   - Click on the settings gear icon
+   - Select "Model Context Protocol"
+   - Click "Add MCP Server"
+   - Enter the URL (default: `http://localhost:8765`)
+   - Click "Test Connection" and then "Save"
+
+3. When chatting with Claude, you can now ask it to:
+   - Create or read notes in your knowledge base
+   - Search for information
+   - Help organize your thoughts
+
+#### Example Interactions
+
+Here are some examples of how to interact with Claude once connected to Basic Memory:
+
+```text
+USER: Create a note about the benefits of regular exercise.
+
+CLAUDE: I'll create a note about exercise benefits for you. Let me do that…
+
+[Claude uses the write_note MCP tool to create the note]
+
+I've created a note titled "Benefits of Regular Exercise" in your knowledge base. It includes sections on cardiovascular health, muscle strength, stress reduction, sleep improvement, weight management, and cognitive benefits. I've also tagged it with "health", "fitness", and "wellness" for easy retrieval.
+```
+
+#### Security Considerations
+
+When using the MCP integration:
+
+1. **Local server only**: By default, the MCP server only accepts connections from localhost for security.
+
+2. **No authentication**: The current MCP implementation doesn't include authentication. Don't expose the server to untrusted networks.
+
+3. **Data sensitivity**: Be mindful of the sensitive information in your knowledge base when connecting AI assistants.
+
+### mcp.start(options)
+
+Starts the MCP server.
+
+**Parameters:**
+
+- `options`: Object with the following properties:
+  - `port`: Number, the port to listen on (default: 8765)
+  - `host`: String, the host to bind to (default: 'localhost')
+  - `knowledgeBase`: String, path to the knowledge base directory (default: '~/basic-memory')
+
+**Returns:** Promise resolving to the server instance.
+
+**Example:**
+
+```javascript
+const server = await mcp.start({
+  port: 9000,
+  knowledgeBase: '/path/to/notes'
+});
+
+// Later, to stop the server
+await server.close();
+```
+
+### mcp.buildContext(query, options)
+
+Builds context for AI assistants based on a query.
+
+**Parameters:**
+
+- `query`: String, the query to build context for
+- `options`: Object with the following properties:
+  - `maxEntities`: Number, maximum number of entities to include (default: 5)
+  - `maxTokens`: Number, maximum context size in tokens (default: 2000)
+  - `includeMetadata`: Boolean, whether to include entity metadata (default: true)
+
+**Returns:** Promise resolving to a string containing the context.
+
+**Example:**
+
+```javascript
+const context = await mcp.buildContext('quantum physics', {
+  maxEntities: 3,
+  maxTokens: 1500
+});
+```
+
+### mcp.registerTools(server, options)
+
+Registers MCP tools with a server instance.
+
+**Parameters:**
+
+- `server`: Object, the server instance
+- `options`: Object with tool configuration options
+
+**Returns:** The server instance with tools registered.
+
+**Example:**
+
+```javascript
+const server = await mcp.start();
+mcp.registerTools(server, {
+  allowReadOnly: true,
+  customTools: myCustomTools
+});
+
 ```

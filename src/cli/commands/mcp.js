@@ -14,7 +14,7 @@ import chalk from 'chalk';
 program
   .command('mcp')
   .description('Start the MCP server for AI assistants to interact with Basic Memory')
-  .option('-p, --port <number>', 'Port to run the server on', '8765')
+  .option('-p, --port <number>', 'Port to run the server on', process.env.BASIC_MEMORY_PORT || '8766')
   .option('-h, --host <string>', 'Host to bind the server to', 'localhost')
   .action(async (options) => {
     const { port, host } = options;
@@ -25,6 +25,7 @@ program
     logger.info(`Server will be available at http://${host}:${port}`);
     
     try {
+      console.log('Attempting to start MCP server...');
       await start();
       logger.info(chalk.green('✓ MCP server started successfully'));
       logger.info('Press Ctrl+C to stop the server');
@@ -32,8 +33,10 @@ program
       // Keep process running
       await new Promise(() => {});
     } catch (error) {
+      console.error('FULL ERROR DETAILS:', error);
       logger.error(chalk.red(`Failed to start MCP server: ${error.message}`));
-      logger.debug(error.stack);
+      logger.error('Error Stack:', error.stack);
+      console.error('Detailed Error:', error);
       process.exit(1);
     }
   });

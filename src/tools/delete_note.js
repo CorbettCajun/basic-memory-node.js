@@ -4,7 +4,7 @@
  * Deletes a note from the database by title or permalink
  */
 
-import { Entity, Link } from '../db/index.js';
+import { Entity, Relation } from '../db/index.js';
 import { Op } from 'sequelize';
 import { unlinkSync, existsSync } from 'fs';
 import pino from 'pino';
@@ -55,8 +55,9 @@ export async function deleteNoteTool(params) {
       };
     }
     
-    // Delete file if it exists and sync is enabled
-    if (process.env.SYNC_TO_FILES === 'true' && entity.file_path) {
+    // Delete file if it exists and sync is enabled by default
+    // Only skip if explicitly set to 'false'
+    if (process.env.SYNC_TO_FILES !== 'false' && entity.file_path) {
       try {
         if (existsSync(entity.file_path)) {
           unlinkSync(entity.file_path);
@@ -69,7 +70,7 @@ export async function deleteNoteTool(params) {
     }
     
     // Delete all links to and from this entity
-    await Link.destroy({
+    await Relation.destroy({
       where: {
         [Op.or]: [
           { source_id: entity.id },

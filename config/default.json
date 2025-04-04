@@ -1,0 +1,65 @@
+{
+  "app": {
+    "name": "Basic Memory Node",
+    "version": "1.0.0",
+    "environment": "production"
+  },
+  "server": {
+    "host": "localhost",
+    "port": 0,
+    "dynamicPortAllocation": true,
+    "connectionTimeout": 10000,
+    "reconnectAttempts": 3,
+    "reconnectDelay": 1000,
+    "maxConnections": 100,
+    "protocolVersion": "2024-11-05"
+  },
+  "database": {
+    "type": "sqlite",
+    "path": "~/basic-memory/database.sqlite",
+    "connectionPoolSize": 10,
+    "migrationStrategy": "auto",
+    "syncToFiles": true
+  },
+  "logging": {
+    "level": "info",
+    "path": "~/basic-memory/logs",
+    "maxLogFiles": 5,
+    "maxLogSize": "10M",
+    "format": "json"
+  },
+  "security": {
+    "allowedCommands": [
+      "delete_note",
+      "read_content", 
+      "build_context",
+      "recent_activity", 
+      "search",
+      "read_note", 
+      "write_note", 
+      "canvas", 
+      "project_info"
+    ],
+    "authentication": {
+      "enabled": false,
+      "method": "none"
+    }
+  },
+  "performance": {
+    "cacheEnabled": true,
+    "cacheMaxSize": 1000,
+    "cacheExpiration": 3600
+  },
+  "features": {
+    "importCommands": [
+      "import_chatgpt",
+      "import_claude_conversations",
+      "import_claude_projects",
+      "import_memory_json"
+    ],
+    "syncService": {
+      "enabled": true,
+      "watchPaths": ["notes", "projects", "memories"]
+    }
+  }
+}

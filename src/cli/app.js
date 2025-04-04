@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { initializeDatabase } from '../db/index.js';
 import pino from 'pino';
+import initCommand from './commands/init.js';
 
 // Set up paths
 const __filename = fileURLToPath(import.meta.url);
@@ -22,8 +23,13 @@ const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   transport: {
     target: 'pino-pretty',
-    options: { colorize: true }
-  }
+    options: { 
+      colorize: true,
+      maxListeners: 1 // Minimal listeners
+    }
+  },
+  base: null, // Remove pid, hostname etc.
+  timestamp: false // Disable timestamp
 });
 
 // Get package info
@@ -37,6 +43,7 @@ program
   .description('Local-first knowledge management combining Zettelkasten with knowledge graphs')
   .version(packageInfo.version)
   .option('-p, --project <name>', 'Specify which project to use', 'main')
+  .addCommand(initCommand)
   .hook('preAction', async (thisCommand, actionCommand) => {
     // Initialize database before each command
     if (actionCommand.name() !== 'version') {

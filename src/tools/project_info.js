@@ -4,7 +4,7 @@
  * Retrieves information about projects from the knowledge base
  */
 
-import { Entity, Link, sequelize } from '../db/index.js';
+import { Entity, Relation, sequelize } from '../db/index.js';
 import { Op } from 'sequelize';
 import pino from 'pino';
 
@@ -59,12 +59,12 @@ export async function projectInfoTool(params) {
     }
     
     // Get related entities
-    const outgoingLinks = await Link.findAll({
+    const outgoingLinks = await Relation.findAll({
       where: { source_id: project.id },
       include: [{ model: Entity, as: 'target' }]
     });
     
-    const incomingLinks = await Link.findAll({
+    const incomingLinks = await Relation.findAll({
       where: { target_id: project.id },
       include: [{ model: Entity, as: 'source' }]
     });

@@ -6,7 +6,9 @@
  */
 
 import { Entity, Observation, Relation, SearchIndex } from '../db/index.js';
-import { Op, literal, fn, col } from 'sequelize';
+import { Op, literal, fn, col, QueryTypes } from 'sequelize';
+import { sequelize } from '../db/index.js';
+import { optimizeSearchQuery } from '../optimizations/search-optimizations.js';
 import pino from 'pino';
 
 // Configure logger
@@ -17,6 +19,25 @@ const logger = pino({
     options: { colorize: true }
   }
 });
+
+// Track if FTS is enabled
+let ftsEnabled = false;
+
+// Check if FTS is enabled on first use
+async function checkFtsEnabled() {
+  if (ftsEnabled) return true;
+  
+  try {
+    const [results] = await sequelize.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='entity_fts'"
+    );
+    ftsEnabled = results.length > 0;
+    return ftsEnabled;
+  } catch (error) {
+    logger.error('Error checking FTS status:', error);
+    return false;
+  }
+}
 
 /**
  * Search for entities matching the query
@@ -50,28 +71,33 @@ export async function searchEntities(options) {
       query.where.entity_type = options.entity_type;
     }
     
-    let entities = [];
-    let total = 0;
-    
-    // Use semantic search if requested and available
-    if (options.semantic) {
-      const semanticResults = await performSemanticSearch(options.query, query.where, options.limit, options.offset);
-      entities = semanticResults.entities;
-      total = semanticResults.total;
-    } else {
-      // Otherwise perform text search
-      entities = await performTextSearch(options.query, options.include_content, query);
-      total = await countTextSearchResults(options.query, options.include_content, query.where);
+    // If no search query, just filter by type
+    if (!options.query || options.query.trim() === '') {
+      const results = await Entity.findAll(query);
+      const count = await Entity.count({ where: query.where });
+      return { results, count };
     }
     
-    return {
-      results: entities,
-      total,
-      limit: options.limit || 20,
-      offset: options.offset || 0
-    };
+    // Check if semantic search is requested and supported
+    if (options.semantic) {
+      return await performSemanticSearch(
+        options.query,
+        query.where,
+        query.limit,
+        query.offset
+      );
+    }
+    
+    // Perform text search
+    const hasFts = await checkFtsEnabled();
+    return await performTextSearch(
+      options.query,
+      options.include_content || false,
+      query,
+      hasFts
+    );
   } catch (error) {
-    logger.error(`Error searching entities: ${error.message}`);
+    logger.error('Error in searchEntities:', error);
     throw error;
   }
 }
@@ -80,39 +106,122 @@ export async function searchEntities(options) {
  * Perform text-based search
  * 
  * @private
+ * @param {string} query - Search query
+ * @param {boolean} includeContent - Whether to search in content as well
+ * @param {Object} queryOptions - Query options
+ * @param {boolean} useFts - Whether to use full-text search
+ * @returns {Promise<Object>} - Object with results array and total count
  */
-async function performTextSearch(query, includeContent, queryOptions) {
-  // Split query into words for better searching
-  const words = query.split(/\s+/).filter(word => word.length > 0);
-  
-  // Prepare conditions
-  const titleConditions = words.map(word => ({
-    title: { [Op.like]: `%${word}%` }
-  }));
-  
-  let searchConditions = {
-    [Op.or]: titleConditions
-  };
-  
-  // Add content search if requested
-  if (includeContent) {
-    const contentConditions = words.map(word => ({
-      content: { [Op.like]: `%${word}%` }
-    }));
+async function performTextSearch(query, includeContent, queryOptions, useFts = false) {
+  try {
+    // Use FTS if available for significant performance improvement
+    if (useFts) {
+      const optimizedQuery = optimizeSearchQuery(query);
+      
+      // Construct FTS query with any existing filters
+      let whereClause = '';
+      const params = [optimizedQuery];
+      
+      if (queryOptions.where.entity_type) {
+        whereClause = ' AND entity_type = ?';
+        params.push(queryOptions.where.entity_type);
+      }
+      
+      // Execute FTS query
+      const ftsResults = await sequelize.query(
+        `SELECT id, title, content, entity_type, permalink, metadata, checksum, created_at, updated_at
+         FROM entity_fts
+         WHERE entity_fts MATCH ? ${whereClause}
+         ORDER BY rank
+         LIMIT ? OFFSET ?`,
+        {
+          replacements: [...params, queryOptions.limit, queryOptions.offset],
+          type: QueryTypes.SELECT,
+          mapToModel: true,
+          model: Entity
+        }
+      );
+      
+      // Count total matches
+      const [{ total }] = await sequelize.query(
+        `SELECT COUNT(*) as total
+         FROM entity_fts
+         WHERE entity_fts MATCH ? ${whereClause}`,
+        {
+          replacements: [...params],
+          type: QueryTypes.SELECT
+        }
+      );
+      
+      return { results: ftsResults, count: parseInt(total) };
+    }
     
-    searchConditions = {
-      [Op.or]: [...titleConditions, ...contentConditions]
+    // Fall back to LIKE-based search for compatibility
+    const searchTerm = `%${query}%`;
+    let whereClause = {
+      ...queryOptions.where,
+      title: { [Op.like]: searchTerm }
+    };
+    
+    if (includeContent) {
+      whereClause = {
+        ...queryOptions.where,
+        [Op.or]: [
+          { title: { [Op.like]: searchTerm } },
+          { content: { [Op.like]: searchTerm } }
+        ]
+      };
+    }
+    
+    const results = await Entity.findAll({
+      where: whereClause,
+      limit: queryOptions.limit,
+      offset: queryOptions.offset,
+      order: queryOptions.order
+    });
+    
+    const count = await countTextSearchResults(query, includeContent, queryOptions.where);
+    
+    return { results, count };
+  } catch (error) {
+    logger.error('Error in performTextSearch:', error);
+    throw error;
+  }
+}
+
+/**
+ * Perform semantic search if vectors available
+ * 
+ * @private
+ */
+async function performSemanticSearch(query, whereClause, limit, offset) {
+  try {
+    // Check if semantic search is available (SearchIndex table exists)
+    const hasSearchIndex = await SearchIndex.findOne();
+    
+    if (!hasSearchIndex) {
+      logger.warn("Semantic search requested but no search indices found. Falling back to text search.");
+      return {
+        entities: await performTextSearch(query, true, { where: whereClause, limit, offset }),
+        total: await countTextSearchResults(query, true, whereClause)
+      };
+    }
+    
+    // TODO: Implement vector search when embedding model is available
+    // For now, we'll warn and fall back to text search
+    logger.warn("Semantic search requested but embedding model not available. Falling back to text search.");
+    return {
+      entities: await performTextSearch(query, true, { where: whereClause, limit, offset }),
+      total: await countTextSearchResults(query, true, whereClause)
+    };
+  } catch (error) {
+    logger.error(`Error in semantic search: ${error.message}`);
+    // Fall back to text search
+    return {
+      entities: await performTextSearch(query, true, { where: whereClause, limit, offset }),
+      total: await countTextSearchResults(query, true, whereClause)
     };
   }
-  
-  // Combine with other filters
-  queryOptions.where = {
-    ...queryOptions.where,
-    ...searchConditions
-  };
-  
-  // Execute search
-  return Entity.findAll(queryOptions);
 }
 
 /**
@@ -152,41 +261,6 @@ async function countTextSearchResults(query, includeContent, whereClause) {
   
   // Count results
   return Entity.count({ where: combinedWhere });
-}
-
-/**
- * Perform semantic search if vectors available
- * 
- * @private
- */
-async function performSemanticSearch(query, whereClause, limit, offset) {
-  try {
-    // Check if semantic search is available (SearchIndex table exists)
-    const hasSearchIndex = await SearchIndex.findOne();
-    
-    if (!hasSearchIndex) {
-      logger.warn("Semantic search requested but no search indices found. Falling back to text search.");
-      return {
-        entities: await performTextSearch(query, true, { where: whereClause, limit, offset }),
-        total: await countTextSearchResults(query, true, whereClause)
-      };
-    }
-    
-    // TODO: Implement vector search when embedding model is available
-    // For now, we'll warn and fall back to text search
-    logger.warn("Semantic search requested but embedding model not available. Falling back to text search.");
-    return {
-      entities: await performTextSearch(query, true, { where: whereClause, limit, offset }),
-      total: await countTextSearchResults(query, true, whereClause)
-    };
-  } catch (error) {
-    logger.error(`Error in semantic search: ${error.message}`);
-    // Fall back to text search
-    return {
-      entities: await performTextSearch(query, true, { where: whereClause, limit, offset }),
-      total: await countTextSearchResults(query, true, whereClause)
-    };
-  }
 }
 
 /**

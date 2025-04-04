@@ -54,3 +54,31 @@ docs/ROADMAP_TEMPLATE.md
 benchmarks/results/
 performance_reports/
 docs/development/
+tests/*.*
+test-data/*.*
+
+# Basic Memory specific exclusions
+# Imported files and temporary storage
+imported/
+tmp/
+backups/
+
+# Project-specific metadata and cache
+.basic-memory/
+.mcp/
+*.imported
+*.bak
+
+# Sync and cache files
+.sync/
+.cache/
+
+# Temporary markdown and JSON files from imports
+*.imported.md
+*.imported.json
+
+# Ignore migration temporary files
+migrations.tmp/
+.qodo
+
+.basic-memory-python

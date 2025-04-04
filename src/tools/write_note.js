@@ -4,23 +4,14 @@
  * Creates or updates a note in the database
  */
 
-import { Entity, Link } from '../db/index.js';
-import slugify from 'slugify';
-import { marked } from 'marked';
-import frontMatter from 'front-matter';
-import pino from 'pino';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
-import { getHomeDir } from '../db/index.js';
-
-// Configure logger
-const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport: {
-    target: 'pino-pretty',
-    options: { colorize: true }
-  }
-});
+import { slugify } from '../utils/slugify.js';
+import { logger } from '../utils/logger.js';
+import { getHomeDir } from '../utils/environment.js';
+import { EntityModel } from '../db/models/entity_model.js';
+import { TagModel } from '../db/models/tag.js';
+import matter from 'gray-matter';
 
 /**
  * Extract wiki-style links from markdown content
@@ -29,12 +20,19 @@ const logger = pino({
  * @returns {Array<string>} - Array of extracted link titles
  */
 function extractWikiLinks(content) {
-  const wikiLinkRegex = /\[\[([^\]]+)\]\]/g;
+  if (!content) return [];
+  
+  // Match [[link]] pattern
+  const linkRegex = /\[\[(.*?)\]\]/g;
   const links = [];
   let match;
   
-  while ((match = wikiLinkRegex.exec(content)) !== null) {
-    links.push(match[1]);
+  while ((match = linkRegex.exec(content)) !== null) {
+    // Extract the link text (without the brackets)
+    const linkText = match[1]?.trim();
+    if (linkText) {
+      links.push(linkText);
+    }
   }
   
   return links;
@@ -47,21 +45,26 @@ function extractWikiLinks(content) {
  * @returns {Object} - Processed content and attributes
  */
 function processContent(rawContent) {
-  // Parse front matter
-  const { attributes, body } = frontMatter(rawContent);
-  
-  // Extract wiki-style links
-  const wikiLinks = extractWikiLinks(body);
-  
-  // Convert markdown to HTML for storage
-  const htmlContent = marked(body);
-  
-  return {
-    content: body,
-    htmlContent,
-    attributes,
-    wikiLinks
-  };
+  try {
+    // Parse front matter
+    const { content, data } = matter(rawContent);
+    
+    // Extract wiki links
+    const links = extractWikiLinks(content);
+    
+    return {
+      content,
+      attributes: data,
+      links
+    };
+  } catch (error) {
+    logger.error('Error processing content', { error: error.message });
+    return {
+      content: rawContent,
+      attributes: {},
+      links: []
+    };
+  }
 }
 
 /**
@@ -77,90 +80,82 @@ function processContent(rawContent) {
  */
 export async function writeNoteTool(params) {
   try {
-    const { title, content: rawContent, type = 'note' } = params;
-    let { attributes = {}, permalink } = params;
+    const { title, content, attributes = {}, type = 'note' } = params;
     
-    // Process the content
-    const { content, htmlContent, wikiLinks } = processContent(rawContent);
-    
-    // If attributes provided in params, merge with any from front matter
-    if (typeof attributes === 'string') {
-      attributes = JSON.parse(attributes);
+    if (!title) {
+      throw new Error('Title is required');
     }
     
-    // Generate permalink if not provided
-    permalink = permalink || attributes.permalink || slugify(title, { lower: true, strict: true });
+    if (!content) {
+      throw new Error('Content is required');
+    }
     
-    // Try to find existing entity
-    let entity = await Entity.findOne({ where: { permalink } });
-    let created = false;
+    // Generate permalink from title if not provided
+    const permalink = params.permalink || slugify(title);
     
-    // Create or update the entity
+    logger.debug('Writing note', { title, permalink });
+    
+    // Process content to extract front matter and links
+    const processedContent = processContent(content);
+    
+    // Merge attributes from parameters and front matter
+    const mergedAttributes = {
+      ...processedContent.attributes,
+      ...attributes
+    };
+    
+    // Ensure title is always set
+    mergedAttributes.title = title;
+    
+    // Format content with front matter
+    const frontMatter = matter.stringify(processedContent.content, mergedAttributes);
+    
+    // Find or create entity
+    let entity = await EntityModel.findOne({
+      where: { permalink }
+    });
+    
     if (entity) {
-      logger.info(`Updating existing note: ${title}`);
+      // Update existing entity
       await entity.update({
         title,
-        content,
-        raw_content: rawContent,
-        type,
-        attributes,
+        content: frontMatter,
+        entity_type: type,
         last_modified: new Date()
       });
-    } else {
-      logger.info(`Creating new note: ${title}`);
-      entity = await Entity.create({
-        title,
-        permalink,
-        content,
-        raw_content: rawContent,
-        type,
-        attributes,
-        last_modified: new Date()
-      });
-      created = true;
-    }
-    
-    // Process wiki links and create relationships
-    if (wikiLinks.length > 0) {
-      logger.debug(`Processing ${wikiLinks.length} wiki links`);
       
-      for (const linkTitle of wikiLinks) {
-        // Generate permalink for the linked entity
-        const linkPermalink = slugify(linkTitle, { lower: true, strict: true });
-        
-        // Find or create the target entity
-        let targetEntity = await Entity.findOne({ where: { permalink: linkPermalink } });
-        
-        if (!targetEntity) {
-          // Create a stub entity that can be filled in later
-          targetEntity = await Entity.create({
-            title: linkTitle,
-            permalink: linkPermalink,
-            content: `# ${linkTitle}\n\nThis is a stub note created from a link.`,
-            raw_content: `# ${linkTitle}\n\nThis is a stub note created from a link.`,
-            type: 'stub',
-            attributes: {},
-            last_modified: new Date()
-          });
-          logger.debug(`Created stub entity: ${linkTitle}`);
-        }
-        
-        // Create link between source and target
-        await Link.findOrCreate({
-          where: {
-            source_id: entity.id,
-            target_id: targetEntity.id,
-            type: 'reference'
-          },
-          defaults: {
-            attributes: {}
-          }
-        });
-      }
+      // Clear existing tags and add new ones
+      await entity.setTags([]);
+    } else {
+      // Create new entity
+      entity = await EntityModel.create({
+        permalink,
+        title,
+        content: frontMatter,
+        entity_type: type,
+        created_at: new Date(),
+        last_modified: new Date()
+      });
     }
     
-    // Write file to disk if enabled
-    if (process.env.SYNC_TO_FILES === 'true') {
+    // Process tags if present in attributes
+    if (mergedAttributes.tags && Array.isArray(mergedAttributes.tags)) {
+      const tagInstances = [];
+      
+      for (const tagName of mergedAttributes.tags) {
+        const [tag] = await TagModel.findOrCreate({
+          where: { name: tagName }
+        });
+        
+        tagInstances.push(tag);
+      }
+      
+      await entity.setTags(tagInstances);
+    }
+    
+    // Write file to disk by default, matching Python version behavior
+    // Only skip if explicitly set to 'false'
+    if (process.env.SYNC_TO_FILES !== 'false') {
       try {
         const home = getHomeDir();
         const dirPath = join(home, type + 's');
@@ -174,26 +169,30 @@ export async function writeNoteTool(params) {
         // Update file path in entity
         await entity.update({ file_path: filePath });
         
-        // Write content to file
-        writeFileSync(filePath, rawContent);
-        logger.debug(`Wrote note to file: ${filePath}`);
+        // Write to disk
+        writeFileSync(filePath, frontMatter);
+        logger.debug('Wrote file to disk', { filePath });
       } catch (error) {
-        logger.error(`Error writing file: ${error.message}`);
-        // Continue even if file write fails
+        logger.error('Error writing file to disk', { error: error.message });
       }
     }
     
-    // Return the result
+    // Reload entity with tags
+    await entity.reload({
+      include: [TagModel]
+    });
+    
     return {
-      title: entity.title,
-      permalink: entity.permalink,
-      created,
-      updated: !created,
-      type: entity.type,
-      last_modified: entity.last_modified
+      permalink,
+      title,
+      content: processedContent.content,
+      tags: entity.Tags ? entity.Tags.map(tag => tag.name) : [],
+      created: entity.created_at,
+      modified: entity.last_modified,
+      links: processedContent.links
     };
   } catch (error) {
-    logger.error(`Error in write_note tool: ${error.message}`);
+    logger.error('Error in write_note tool', { error: error.message });
     throw error;
   }
 }
